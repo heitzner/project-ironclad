@@ -65,7 +65,7 @@ This project is organized as a [monorepo](https://monorepo.tools/) managed via n
 
 1. Clone the repository:
 ```
-git clone https://github.com/quadrathick/project-ironclad
+git clone https://github.com/heitzner/project-ironclad
 ```
 
 2. Install all dependencies across workspaces:
