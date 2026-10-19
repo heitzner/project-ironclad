@@ -75,7 +75,7 @@ npm install
 
 3. Run the frontend development server:
 ```
-npm run dev --workspaces=apps/web
+npm run dev --workspace=apps/web
 ```
 
 ## Development Workflow
