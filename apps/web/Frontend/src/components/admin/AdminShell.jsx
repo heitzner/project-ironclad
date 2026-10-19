@@ -22,7 +22,7 @@ export default function AdminShell({ section, title, subtitle, user = null, prev
   const allowed = isAdmin(user)
   return <PageLayout role="admin" user={user} fullWidth>
     <div className="admin-workspace grid w-full min-w-0 flex-1 grid-cols-1 content-start items-start gap-3 p-3 md:grid-cols-[clamp(12rem,16vw,15rem)_minmax(0,1fr)] md:gap-4 md:p-4">
-      <aside className="min-w-0 rounded-panel border border-track bg-white p-3 shadow-card md:sticky md:top-20 md:min-h-[calc(100svh_-_6rem)]">
+      <aside className="min-w-0 rounded-panel border border-track bg-white p-3 shadow-card md:sticky md:top-20 md:min-h-[calc(100svh-6rem)]">
         <div className="mb-3 hidden items-center gap-2 border-b border-track px-3 pb-4 pt-2 text-xs font-semibold text-dark md:flex"><ShieldCheck aria-hidden="true" className="h-4 w-4" />Administration</div>
         <button type="button" onClick={() => setMobileNavigationOpen(open => !open)} aria-expanded={mobileNavigationOpen} aria-controls="admin-sidebar-links" className="flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-3 text-sm font-semibold text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden">
           <span>{sections.find(item => item.id === section)?.label ?? 'Admin navigation'}</span><ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${mobileNavigationOpen ? 'rotate-180' : ''}`} />
@@ -38,7 +38,7 @@ export default function AdminShell({ section, title, subtitle, user = null, prev
         </ul>
       </nav>
       </aside>
-      <main className="flex min-h-[calc(100svh_-_6rem)] min-w-0 flex-col gap-3">
+      <main className="flex min-h-[calc(100svh-6rem)] min-w-0 flex-col gap-3">
         <PageHeader icon={ShieldCheck} title={title} subtitle={subtitle || 'Manage campus facilities, bookings, events, and account roles.'} />
         {previewControls}
         <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[10px] text-textSecondary">
