@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { ChevronDown, CircleUserRound, Menu, X } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
+import LogIn from './LogIn.jsx'
+import { signOutTestAccount, useTestUser } from './test-auth.js'
 
 const roleLinks = {
   student: [
@@ -9,19 +11,24 @@ const roleLinks = {
     { label: 'Booking', to: '/booking' },
     { label: 'Archive', to: '/archive' },
   ],
-  council: [],
-  admin: [],
+  council: [{ label: 'Council workspace', to: '/news-feed' }],
+  admin: [{ label: 'Admin dashboard', to: '/news-feed' }],
   public: [],
 }
 
-function Navbar({ role = 'public', user = null, onSignOut }) {
+function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSignOut }) {
+  const testUser = useTestUser()
+  const user = suppliedUser ?? testUser
+  const role = user?.role ?? suppliedRole
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const navigationTrigger = useRef(null)
   const userTrigger = useRef(null)
   const links = roleLinks[role] ?? []
   const displayName = user?.name || 'Signed out'
-  const program = user?.program
+  const program = user?.testAccount ? `${role.toUpperCase()} · Test session` : user?.program
 
   return (
     <nav
@@ -36,8 +43,8 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
       <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <img src={ironcladLogo} alt="IronClad" className="h-8 w-8 object-contain" />
-          <span className="text-[15px] font-bold leading-[22px] tracking-[-0.375px]">IronClad</span>
-          <span className="ml-1 hidden rounded-full bg-navActive px-1 py-0.5 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.5px] text-white sm:inline">
+          <span className="text-[15px] font-bold leading-5.5 tracking-[-0.375px]">IronClad</span>
+          <span className="ml-1 hidden rounded-full bg-navActive px-1 py-0.5 text-[10px] font-semibold uppercase leading-3.5 tracking-[0.5px] text-white sm:inline">
             Portal
           </span>
         </Link>
@@ -48,10 +55,10 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `rounded-control px-4 py-[6px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                `rounded-control px-4 py-1.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   isActive
                     ? 'bg-navActive text-[13px] font-semibold leading-5 text-white'
-                    : 'text-[15px] font-medium leading-[22px] text-navMuted hover:bg-navActive/40 hover:text-white'
+                    : 'text-[15px] font-medium leading-5.5 text-navMuted hover:bg-navActive/40 hover:text-white'
                 }`
               }
             >
@@ -74,7 +81,11 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
               {navigationOpen ? <X aria-hidden="true" className="h-6 w-6" /> : <Menu aria-hidden="true" className="h-6 w-6" />}
             </button>
           )}
-          <div className="relative">
+          {!user ? (
+            <button type="button" onClick={() => setLoginOpen(true)} className="min-h-11 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Sign in
+            </button>
+          ) : <div className="relative">
           <button
             ref={userTrigger}
             type="button"
@@ -92,10 +103,10 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
               </span>
             )}
             <span className="hidden flex-col text-left sm:flex">
-              <span className="text-[11px] font-semibold leading-[14px] tracking-[0.44px] text-white">{displayName}</span>
-              {program && <span className="text-[10px] font-medium leading-[10px] tracking-[0.5px] text-navMuted">{program}</span>}
+              <span className="text-[11px] font-semibold leading-3.5 tracking-[0.44px] text-white">{displayName}</span>
+              {program && <span className="text-[10px] font-medium leading-2.5 tracking-[0.5px] text-navMuted">{program}</span>}
             </span>
-            <ChevronDown aria-hidden="true" className="h-[7px] w-[7px] text-navMuted" />
+            <ChevronDown aria-hidden="true" className="h-1.75 w-1.75 text-navMuted" />
           </button>
 
           {menuOpen && (
@@ -110,17 +121,19 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
               <button
                 type="button"
                 onClick={() => {
-                  onSignOut?.()
+                  if (user?.testAccount) signOutTestAccount()
+                  else onSignOut?.()
                   setMenuOpen(false)
+                  navigate('/news-feed')
                 }}
-                disabled={!onSignOut}
+                disabled={!onSignOut && !user?.testAccount}
                 className="block min-h-11 w-full rounded-control px-3 py-2 text-left text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Sign out
               </button>
             </div>
           )}
-          </div>
+          </div>}
         </div>
       </div>
       {navigationOpen && (
@@ -137,6 +150,7 @@ function Navbar({ role = 'public', user = null, onSignOut }) {
           ))}
         </div>
       )}
+      {loginOpen && <LogIn onClose={() => setLoginOpen(false)} onSignedIn={() => { setLoginOpen(false); navigate('/news-feed') }} />}
     </nav>
   )
 }
