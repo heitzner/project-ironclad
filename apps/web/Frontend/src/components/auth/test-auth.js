@@ -73,12 +73,19 @@ function publicUser(account) {
 
 function setUser(user, remember = false) {
   // Persist only the demo profile, never the entered password.
-  localStorage.removeItem(userKey)
-  sessionStorage.removeItem(userKey)
-  if (user) (remember ? localStorage : sessionStorage).setItem(userKey, JSON.stringify(user))
+  try {
+    localStorage.removeItem(userKey)
+    sessionStorage.removeItem(userKey)
+    if (user) (remember ? localStorage : sessionStorage).setItem(userKey, JSON.stringify(user))
+  } catch {
+    // Preview access still works in memory when browser storage is unavailable.
+  }
   currentUser = user
   listeners.forEach((listener) => listener())
+  return user
 }
+
+export const getTestUser = () => currentUser
 
 async function digest(password, salt) {
   const bytes = new TextEncoder().encode(`${salt}:${password}`)
@@ -99,15 +106,14 @@ export async function signInTestAccount(studentId, password, remember = false) {
   const fixed = testAccounts.find((account) => account.studentId === username)
   if (fixed) {
     if (fixed.password !== password) throw new Error('Incorrect username or password.')
-    setUser(publicUser(fixed), remember)
-    return
+    return setUser(publicUser(fixed), remember)
   }
   const accounts = readStored(accountsKey, [])
   const account = accounts.find((item) => item.studentId === username)
   if (!account || (await digest(password, account.salt)) !== account.passwordHash) {
     throw new Error('Incorrect username or password.')
   }
-  setUser(publicUser(account), remember)
+  return setUser(publicUser(account), remember)
 }
 
 export async function registerTestStudent({

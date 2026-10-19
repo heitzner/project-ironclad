@@ -16,7 +16,7 @@ export default function CouncilApplications(props) {
 
 function ReviewSession({ auth, resource, service, criteria, dispatch }) {
   const actions = useMemo(() => createReviewActions({ service, userId: auth.user?.id,
-    canReview: auth.capabilities.canReviewApplications, canExport: auth.capabilities.canExportApplications }), [service, auth.user?.id, auth.capabilities.canReviewApplications, auth.capabilities.canExportApplications])
+    canReview: auth.user?.role === 'council' && auth.capabilities.canReviewApplications, canExport: auth.user?.role === 'council' && auth.capabilities.canExportApplications }), [service, auth.user?.id, auth.user?.role, auth.capabilities.canReviewApplications, auth.capabilities.canExportApplications])
   const state = useSyncExternalStore(actions.subscribe, actions.getSnapshot, actions.getSnapshot)
   useEffect(() => actions.cancel, [actions])
   const inputRef = useRef(null), errorRef = useRef(null), pageFocusRef = useRef(null)
@@ -25,7 +25,7 @@ function ReviewSession({ auth, resource, service, criteria, dispatch }) {
   const protectedState = auth.status !== 'authenticated' ? auth.status
     : ['signed-out', 'forbidden'].includes(resource.status) ? resource.status
     : resource.error?.status === 401 || state.error?.status === 401 ? 'signed-out'
-      : auth.capabilities.canReviewApplications !== true || resource.error?.status === 403 || state.error?.status === 403 ? 'forbidden' : null
+      : auth.user?.role !== 'council' || auth.capabilities.canReviewApplications !== true || resource.error?.status === 403 || state.error?.status === 403 ? 'forbidden' : null
   let data = null, invalid = false
   if (!protectedState && resource.data) {
     try { data = validateReviewData(resource.data, criteria) } catch { invalid = true }

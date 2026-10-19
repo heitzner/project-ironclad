@@ -13,13 +13,16 @@ export default function CouncilDialog({ open, title, description, icon, children
     const dialog = dialogRef.current
     const opener = document.activeElement
     const fallback = restoreFocusRef?.current
+    const previousOverflow = document.body.style.overflow
     dialog.showModal()
+    document.body.style.overflow = 'hidden'
     const requested = initialFocusRef?.current ?? (initialFocusSelector ? dialog.querySelector(initialFocusSelector) : null)
     const initial = requested && !requested.matches(':disabled') ? requested : dialog.querySelector(focusable) ?? dialog
     initial.focus()
 
     return () => {
       dialog.close()
+      document.body.style.overflow = previousOverflow
       const destination = opener?.isConnected && opener.matches(focusable) && !opener.matches(':disabled') && opener.getClientRects().length > 0
         ? opener : fallback
       if (destination?.isConnected) destination.focus({ preventScroll: true })

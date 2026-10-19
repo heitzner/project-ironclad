@@ -46,7 +46,7 @@ export function registrationProgress(registration) {
 }
 
 // Validate the richer feed boundary before rendering; incomplete data never becomes fake totals.
-export function validateFeed(data) {
+export function validateFeed(data, { publicFeed = false } = {}) {
   const unique = (items) => new Set(items.map((item) => item.id)).size === items.length
   const validAction = (action) => record(action) && typeof action.available === 'boolean' && optional(action.reason, text)
   const validCampaign = (item) => identity(item) && text(item.title)
@@ -64,9 +64,11 @@ export function validateFeed(data) {
   const valid = record(data) && Array.isArray(data.categories) && Array.isArray(data.campaigns)
     && data.categories.every((item) => identity(item) && text(item.label)) && unique(data.categories)
     && data.campaigns.every(validCampaign) && unique(data.campaigns)
-    && (data.council === null || (identity(data.council) && text(data.council.name) && count(data.council.activeEventCount)
+    && (publicFeed || data.council === null || (identity(data.council) && text(data.council.name) && count(data.council.activeEventCount)
       && optional(data.council.logo, image) && optional(data.council.description, (value) => typeof value === 'string')))
-    && (data.council !== null || data.campaigns.length === 0)
+    && (publicFeed || data.council !== null || data.campaigns.length === 0)
+    && (!publicFeed || optional(data.activeEventCount, count))
+    && (!publicFeed || optional(data.nextVenue, value => record(value) && text(value.label)))
     && optional(data.pagination, (value) => record(value) && Number.isSafeInteger(value.page) && value.page >= 1
       && Number.isSafeInteger(value.totalPages) && value.totalPages >= value.page)
   if (!valid) throw new ApiError('The Council feed response is incomplete. Please retry.', { code: 'INVALID_RESPONSE' })

@@ -22,12 +22,13 @@ test('Council role labels alone grant no applicant or review link', () => {
 })
 
 test('only explicit current-session capabilities expose application and review navigation', () => {
-  const granted = { ...auth, capabilities: { canApply: true, canReviewApplications: true } }
+  const granted = { ...auth, user: { ...auth.user, role: 'council' }, capabilities: { canApply: true, canReviewApplications: true } }
   assert.deepEqual(paths(councilShell(granted)).slice(-2), ['/council/apply', '/council/applications'])
   const denied = councilShell({ ...auth, capabilities: { canApply: 'true', canReviewApplications: 1 } })
   assert(!paths(denied).includes('/council/apply'))
   assert(!paths(denied).includes('/council/applications'))
-  assert.deepEqual(paths(councilShell({ ...granted, capabilities: {} })), paths(councilShell(auth)))
+  assert.deepEqual(paths(councilShell({ ...granted, capabilities: {} })), ['/council'])
+  for (const role of ['admin', 'student']) assert(!paths(councilShell({ ...granted, user: { ...auth.user, role } })).includes('/council/applications'))
 })
 
 test('non-authenticated states hide retained identity and capability links immediately', () => {

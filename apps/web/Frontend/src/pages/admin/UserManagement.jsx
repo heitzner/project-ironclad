@@ -4,6 +4,7 @@ import AdminShell from '../../components/admin/AdminShell.jsx'
 import AdminState from '../../components/admin/AdminState.jsx'
 import AdminTable from '../../components/admin/AdminTable.jsx'
 import RoleDialog from '../../components/admin/RoleDialog.jsx'
+import { isAdmin } from '../../components/admin/admin.logic.js'
 
 export default function UserManagement({
   members,
@@ -12,12 +13,13 @@ export default function UserManagement({
   error,
   onRetry,
   onSaveRole,
+  onCheckStatus,
   ...shell
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('')
   const [selection, setSelection] = useState(null)
-  const [notice, setNotice] = useState('')
+  const canEdit = !loading && !error && !shell.preview && isAdmin(shell.user)
   const filtered = members?.filter(
     (member) =>
       (!filter || member.councilRoleId === filter) &&
@@ -58,16 +60,13 @@ export default function UserManagement({
               ))}
           </select>
         </label>
-        <button type="button" className="admin-button" onClick={() => setSelection({})}>
+        <button type="button" className="admin-button" disabled={!canEdit} onClick={() => setSelection({})}>
           <ShieldCheck aria-hidden="true" className="h-4 w-4" />
           Set council role
         </button>
       </section>
-      {notice && (
-        <p role="status" className="rounded-control bg-cardBg p-3 text-xs text-deep">
-          {notice}
-        </p>
-      )}
+      {!onSaveRole && <p className="text-xs leading-6 text-textSecondary">Role changes are not connected yet. Membership applications are reviewed in the Council workspace.</p>}
+      {(query || filter) && <button type="button" className="admin-secondary self-start" onClick={() => { setQuery(''); setFilter('') }}>Clear member filters</button>}
       <AdminTable
         label="Council members"
         columns={[
@@ -106,6 +105,7 @@ export default function UserManagement({
                   <button
                     type="button"
                     className="admin-secondary"
+                    disabled={!canEdit}
                     onClick={() => setSelection(member)}
                   >
                     {roles?.find((role) => role.id === member.councilRoleId)?.name || 'Set role'}
@@ -119,16 +119,11 @@ export default function UserManagement({
           member={selection.id ? selection : undefined}
           members={members}
           roles={roles}
-          user={shell.user}
+          user={canEdit ? shell.user : null}
           preview={shell.preview}
-          onSaveRole={
-            onSaveRole
-              ? async (...args) => {
-                  await onSaveRole(...args)
-                  setNotice('The council role was updated.')
-                }
-              : undefined
-          }
+          onSaveRole={onSaveRole}
+          onRefresh={onRetry}
+          onCheckStatus={onCheckStatus}
           onClose={() => setSelection(null)}
         />
       )}

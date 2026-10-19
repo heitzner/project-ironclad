@@ -16,6 +16,7 @@ export default function EventManagement({
   onRetry,
   onSaveEvent,
   onCompleteEvent,
+  onCheckStatus,
   ...shell
 }) {
   const [query, setQuery] = useState('')
@@ -23,7 +24,6 @@ export default function EventManagement({
   const [editing, setEditing] = useState(null)
   const [completing, setCompleting] = useState(null)
   const [details, setDetails] = useState(null)
-  const [notice, setNotice] = useState('')
   const categories = [
     ...new Set((events ?? []).map((event) => event.category).filter(Boolean)),
   ].sort()
@@ -34,7 +34,7 @@ export default function EventManagement({
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   )
-  const canEdit = !shell.preview && isAdmin(shell.user)
+  const canEdit = !shell.preview && isAdmin(shell.user) && !loading && !error
   return (
     <AdminShell {...shell} section="events" title="Campus Events">
       <section
@@ -73,16 +73,13 @@ export default function EventManagement({
             ))}
           </select>
         </label>
-        <button type="button" className="admin-button" onClick={() => setEditing({})}>
+        <button type="button" className="admin-button" disabled={!canEdit} onClick={() => setEditing({})}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Add/Create Event
         </button>
       </section>
-      {notice && (
-        <p role="status" className="rounded-control bg-cardBg p-3 text-xs text-deep">
-          {notice}
-        </p>
-      )}
+      {(!onSaveEvent || !onCompleteEvent) && <p className="text-xs leading-6 text-textSecondary">Event changes are available when the corresponding save and completion actions are connected.</p>}
+      {(query || category) && <button type="button" className="admin-secondary self-start" onClick={() => { setQuery(''); setCategory('') }}>Clear event filters</button>}
       <section className="min-h-96 rounded-panel bg-pageBg p-3" aria-label="Campus events">
         {loading || error || !events || !filtered.length ? (
           <AdminState
@@ -113,7 +110,7 @@ export default function EventManagement({
                       {event.status}
                     </span>
                     {event.category && (
-                      <span className="text-xs text-textMuted">{event.category}</span>
+                      <span className="text-xs text-textSecondary">{event.category}</span>
                     )}
                   </div>
                   <h2 className="text-base font-semibold">{event.title}</h2>
@@ -141,7 +138,7 @@ export default function EventManagement({
                     >
                       View Venue Details
                     </button>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         className="admin-secondary"
@@ -170,31 +167,21 @@ export default function EventManagement({
         <EventForm
           event={editing.id ? editing : undefined}
           venues={venues}
-          user={shell.user}
+          user={canEdit ? shell.user : null}
           preview={shell.preview}
-          onSave={
-            onSaveEvent
-              ? async (payload) => {
-                  await onSaveEvent(payload)
-                  setNotice('The event was saved.')
-                }
-              : undefined
-          }
+          onSave={onSaveEvent}
+          onRefresh={onRetry}
+          onCheckStatus={onCheckStatus}
           onClose={() => setEditing(null)}
         />
       )}
       {completing && (
         <CompleteEventDialog
           event={completing}
-          user={shell.user}
-          onComplete={
-            onCompleteEvent
-              ? async (...args) => {
-                  await onCompleteEvent(...args)
-                  setNotice('The event was marked as complete.')
-                }
-              : undefined
-          }
+          user={canEdit ? shell.user : null}
+          onComplete={onCompleteEvent}
+          onRefresh={onRetry}
+          onCheckStatus={onCheckStatus}
           onClose={() => setCompleting(null)}
         />
       )}

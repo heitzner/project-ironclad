@@ -4,6 +4,7 @@ import CouncilFeedToolbar from './CouncilFeedToolbar.jsx'
 import CampaignCard from './CampaignCard.jsx'
 import CouncilViewState from './CouncilViewState.jsx'
 import CouncilButton from './CouncilButton.jsx'
+import FeedPreviewNotice from '../common/FeedPreviewNotice.jsx'
 import { feedViewState, validateFeed } from './councilFeed.model.js'
 
 export default function CouncilFeed({ resource, auth, criteria, dispatch, onAddPost, onApply, onViewVenue, onRegisterIndividual, onRegisterTeam, searchInputRef }) {
@@ -25,6 +26,7 @@ export default function CouncilFeed({ resource, auth, criteria, dispatch, onAddP
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <CouncilHeader council={visible?.council} />
+      {visible?.preview === true && <FeedPreviewNotice />}
       {authorized && <CouncilFeedToolbar criteria={criteria} dispatch={dispatch} categories={visible?.categories ?? []} council={visible?.council} auth={auth} onAddPost={onAddPost} onApply={onApply} refreshFeed={resource.refetch} inputRef={inputRef} actionReason={actionReason} />}
       {state !== 'success' && <CouncilViewState
         state={state}

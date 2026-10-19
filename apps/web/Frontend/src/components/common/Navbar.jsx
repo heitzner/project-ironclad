@@ -2,8 +2,8 @@ import { useRef, useState } from 'react'
 import { ChevronDown, CircleUserRound, Menu, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
-import LogIn from '../auth/LogIn.jsx'
-import { signOutTestAccount, useTestUser } from '../auth/test-auth.js'
+import viewerLogo from '../public/assets/viewer-logo.png'
+import { usePortal, roleDestination } from './portal.context.js'
 
 const roleLinks = {
   student: [
@@ -11,27 +11,28 @@ const roleLinks = {
     { label: 'Booking', to: '/booking' },
     { label: 'Archive', to: '/archive' },
   ],
-  council: [{ label: 'Council workspace', to: '/news-feed' }],
-  admin: [{ label: 'Admin dashboard', to: '/news-feed' }],
+  council: [{ label: 'Council workspace', to: '/council' }],
+  admin: [{ label: 'Admin dashboard', to: '/admin' }],
   public: [],
 }
 
 function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSignOut, navigationLinks, homeTo = '/' }) {
-  const testUser = useTestUser()
+  const portal = usePortal()
   const customNavigation = navigationLinks !== undefined
   // Council supplies its own session and capability-based links, including when signed out.
-  const user = customNavigation ? suppliedUser : suppliedUser ?? testUser
+  const user = suppliedUser
   const role = customNavigation ? suppliedRole : user?.role ?? suppliedRole
-  const testSession = !customNavigation && user?.testAccount
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [navigationOpen, setNavigationOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState('')
+  const signOutGuard = useRef(false)
   const navigationTrigger = useRef(null)
   const userTrigger = useRef(null)
   const links = navigationLinks ?? roleLinks[role] ?? []
-  const displayName = user ? user.name || 'Signed in' : 'Signed out'
-  const program = testSession ? `${role.toUpperCase()} · Test session` : user?.program
+  const displayName = user ? typeof user.name === 'string' && user.name.trim() ? user.name : 'Signed in' : 'Signed out'
+  const program = typeof user?.program === 'string' ? user.program : typeof user?.program?.label === 'string' ? user.program.label : undefined
 
   return (
     <nav
@@ -45,10 +46,10 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
     >
       <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link to={homeTo} className="flex shrink-0 items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <img src={ironcladLogo} alt="IronClad" className="h-8 w-8 object-contain" />
+          <img src={user ? ironcladLogo : viewerLogo} alt="IronClad" className="h-8 w-8 object-contain" />
           <span className="text-[15px] font-bold leading-[22px] tracking-[-0.375px]">IronClad</span>
           <span className="ml-1 hidden rounded-full bg-navActive px-1 py-0.5 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.5px] text-white sm:inline">
-            Portal
+            {user?.testAccount ? 'Preview' : user ? 'Portal' : 'Viewer'}
           </span>
         </Link>
 
@@ -85,13 +86,14 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
               {navigationOpen ? <X aria-hidden="true" className="h-6 w-6" /> : <Menu aria-hidden="true" className="h-6 w-6" />}
             </button>
           )}
-          {!user && !customNavigation ? (
+          {!user ? (
             <button
               type="button"
-              onClick={() => setLoginOpen(true)}
-              className="min-h-11 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => portal?.openLogin()}
+              disabled={!portal}
+              className="min-h-11 rounded-control border-2 border-cardBg px-4 py-2 text-sm font-semibold text-white hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Sign in
+              Log in
             </button>
           ) : (
           <div className="relative">
@@ -104,7 +106,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
             aria-label="Open user menu"
             className="flex min-h-11 items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {user?.avatarUrl ? (
+            {typeof user?.avatarUrl === 'string' && user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-ring" />
             ) : (
               <span className="flex h-8 w-8 items-center justify-center rounded-full text-navMuted ring-1 ring-ring" aria-hidden="true">
@@ -121,6 +123,11 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
           {menuOpen && (
             <div id="student-user-menu" className="absolute right-0 top-full mt-2 min-w-36 rounded-control bg-white p-1 text-textPrimary shadow-card">
               <Link
+                to={roleDestination({ role })}
+                onClick={() => setMenuOpen(false)}
+                className="flex min-h-11 items-center rounded-control px-3 py-2 text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >My workspace</Link>
+              <Link
                 to="/profile"
                 onClick={() => setMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-control px-3 py-2 text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -129,19 +136,30 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
               </Link>
               <button
                 type="button"
-                onClick={() => {
-                  if (onSignOut) onSignOut()
-                  else if (testSession) {
-                    signOutTestAccount()
-                    navigate('/news-feed')
+                onClick={async () => {
+                  if (signOutGuard.current || !onSignOut) return
+                  signOutGuard.current = true
+                  setSigningOut(true)
+                  setSignOutError('')
+                  try {
+                    const result = await onSignOut()
+                    if (result?.signedOut !== true) throw new Error('Sign-out has not been confirmed. Try again.')
+                    setMenuOpen(false)
+                    navigate('/')
+                  } catch (error) {
+                    setSignOutError(error?.message || 'Unable to sign out. Try again.')
+                  } finally {
+                    signOutGuard.current = false
+                    setSigningOut(false)
                   }
-                  setMenuOpen(false)
                 }}
-                disabled={!onSignOut && !testSession}
+                disabled={!onSignOut || signingOut}
                 className="block min-h-11 w-full rounded-control px-3 py-2 text-left text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Sign out
+                {signingOut ? 'Signing out…' : 'Sign out'}
               </button>
+              {!onSignOut && <p className="max-w-60 p-3 text-xs leading-5 text-textSecondary">Sign-out is not connected yet.</p>}
+              {signOutError && <p role="alert" className="max-w-60 p-3 text-xs leading-5 text-textPrimary">{signOutError}</p>}
             </div>
           )}
           </div>
@@ -162,15 +180,6 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
             </NavLink>
           ))}
         </div>
-      )}
-      {loginOpen && !customNavigation && (
-        <LogIn
-          onClose={() => setLoginOpen(false)}
-          onSignedIn={() => {
-            setLoginOpen(false)
-            navigate('/news-feed')
-          }}
-        />
       )}
     </nav>
   )

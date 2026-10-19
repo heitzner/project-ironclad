@@ -1,12 +1,16 @@
 import PageLayout from '../../components/common/PageLayout'
-import { useTestUser } from '../../components/auth/test-auth.js'
-import AdminWorkspace from '../admin/AdminWorkspace.jsx'
+import { Navigate } from 'react-router-dom'
+import useAuth from '../../hooks/useAuth.js'
+import PortalState from '../../components/common/PortalState.jsx'
 
 export default function NewsFeed() {
-  const user = useTestUser()
-  if (user?.role === 'admin') {
-    return <AdminWorkspace user={user} />
-  }
+  const auth = useAuth()
+  const user = auth.user
+  if (auth.status === 'authenticated' && user?.role === 'admin') return <Navigate to="/admin" replace />
+  if (auth.status === 'authenticated' && user?.role === 'council') return <Navigate to="/council" replace />
+  if (auth.status !== 'authenticated') return <PageLayout><PortalState /></PageLayout>
+  if (user?.role !== 'student') return <PageLayout><PortalState state="forbidden" /></PageLayout>
+  const label = value => ['string', 'number'].includes(typeof value) ? value : 'Not provided'
   return (
     <PageLayout role={user?.role ?? 'student'} user={user}>
       <section className="grid gap-3 rounded-card bg-white p-6 shadow-card">
@@ -15,15 +19,15 @@ export default function NewsFeed() {
         </h1>
         {user ? (
           <>
-            <p className="text-sm text-textSecondary">Welcome, {user.name}.</p>
+            <p className="text-sm text-textSecondary">Welcome, {label(user.name)}.</p>
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="font-semibold">Student ID</dt>
-                <dd>{user.studentId}</dd>
+                <dd>{label(user.studentId)}</dd>
               </div>
               <div>
                 <dt className="font-semibold">Role</dt>
-                <dd className="capitalize">{user.role}</dd>
+                <dd className="capitalize">{label(user.role)}</dd>
               </div>
               <div>
                 <dt className="font-semibold">Section</dt>
@@ -35,8 +39,7 @@ export default function NewsFeed() {
               </div>
             </dl>
             <p className="text-xs leading-5 text-textMuted">
-              Browser test session. Live portal data is not connected
-              {user.role === 'council' ? '; council tools have not been implemented yet' : ''}.
+              Student news is not connected yet. Campus announcements are available from Campus news.
             </p>
           </>
         ) : (

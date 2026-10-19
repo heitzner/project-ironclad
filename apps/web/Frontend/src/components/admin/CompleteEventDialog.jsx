@@ -1,20 +1,17 @@
-import { useState } from 'react'
 import AdminDialog from './AdminDialog.jsx'
 import { isAdmin } from './admin.logic.js'
+import useAdminMutation from './useAdminMutation.js'
+import AdminMutationFeedback from './AdminMutationFeedback.jsx'
 
-export default function CompleteEventDialog({ event, user, onComplete, onClose }) {
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState('')
+export default function CompleteEventDialog({ event, user, onComplete, onClose, onRefresh, onCheckStatus }) {
+  const mutation = useAdminMutation({ key: `complete-event:${event.id}`, callback: onComplete, onRefresh, onCheckStatus })
+  const pending = mutation.pending || mutation.checking
   async function confirm() {
-    if (pending || !isAdmin(user) || !onComplete || event.status === 'completed') return
-    setPending(true)
-    setError('')
-    try { await onComplete(event.id, { version: event.version }); onClose() }
-    catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to complete the event. Please try again.') }
-    finally { setPending(false) }
+    if (mutation.blocked || !isAdmin(user) || !onComplete || event.status === 'completed') return
+    await mutation.run([event.id, { version: event.version }], result => result?.id === event.id && result?.status === 'completed')
   }
   return <AdminDialog title="Mark event as complete?" description={`Confirm that “${event.title}” has finished. Its completed status will be saved by the event service.`} busy={pending} onClose={onClose}>
-    {error && <p role="alert" className="mb-4 text-sm">{error}</p>}
-    <div className="flex justify-end gap-2"><button type="button" className="admin-secondary" disabled={pending} onClick={onClose}>Cancel</button><button type="button" className="admin-button" disabled={pending || !isAdmin(user) || !onComplete} onClick={confirm}>{pending ? 'Saving…' : 'Confirm completion'}</button></div>
+    <AdminMutationFeedback mutation={mutation} onRefresh={onRefresh} onCheckStatus={onCheckStatus} />
+    <div className="mt-4 flex flex-wrap justify-end gap-2"><button type="button" className="admin-secondary" disabled={pending} onClick={onClose}>{mutation.outcome ? 'Done' : 'Cancel'}</button><button type="button" className="admin-button" disabled={mutation.blocked || !isAdmin(user) || !onComplete || event.status === 'completed'} onClick={confirm}>{pending ? 'Saving…' : 'Confirm completion'}</button></div>
   </AdminDialog>
 }

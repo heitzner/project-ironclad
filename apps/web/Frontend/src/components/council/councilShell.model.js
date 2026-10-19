@@ -15,6 +15,6 @@ export function councilShell(auth) {
   ] : []
   navigationLinks.push({ label: 'Council', to: '/council', end: true })
   if (current && auth.capabilities.canApply === true) navigationLinks.push({ label: 'My application', to: '/council/apply', end: true })
-  if (current && auth.capabilities.canReviewApplications === true) navigationLinks.push({ label: 'Applications', to: '/council/applications', end: true })
+  if (current?.role === 'council' && auth.capabilities.canReviewApplications === true) navigationLinks.push({ label: 'Applications', to: '/council/applications', end: true })
   return { role, user, navigationLinks, homeTo: role === 'student' ? '/' : '/council' }
 }

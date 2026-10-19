@@ -5,7 +5,7 @@ import useAsyncResource from './useAsyncResource.js'
 
 export default function useCouncilApplications({ service = councilService, query = '', program = '', status = '', page = 1 } = {}) {
   const auth = useAuth()
-  const allowed = auth.status === 'authenticated' && auth.capabilities.canReviewApplications === true
+  const allowed = auth.status === 'authenticated' && auth.user?.role === 'council' && auth.capabilities.canReviewApplications === true
   const search = query.trim()
   const load = useCallback(({ signal }) => service.getApplications({ query: search, program, status, page }, { signal }),
     [service, search, program, status, page])

@@ -9,7 +9,8 @@ import CouncilApplicationPage from './CouncilApplicationPage.jsx'
 import CouncilApplicationsPage from './CouncilApplicationsPage.jsx'
 
 // The integration host supplies actual session/service adapters, never endpoint guesses.
-export default function CouncilRoutes({ session, loadSession, sessionKey, ...integration }) {
+export default function CouncilRoutes({ session, loadSession, sessionKey, sharedSession = false, ...integration }) {
+  if (sharedSession) return <CouncilShell {...integration} />
   return <AuthProvider session={session} loadSession={loadSession} sessionKey={sessionKey}>
     <CouncilShell {...integration} />
   </AuthProvider>
@@ -37,6 +38,6 @@ function CouncilShell({ service, postConstraints, onAddPost, onApply, onViewVenu
 function CouncilAccess({ capability, children }) {
   const auth = useAuth()
   if (auth.status !== 'authenticated') return <CouncilViewState state={auth.loading ? 'loading' : auth.status} onRetry={auth.refetch} />
-  if (auth.capabilities[capability] !== true) return <CouncilViewState state="forbidden" />
+  if (auth.capabilities[capability] !== true || (capability === 'canReviewApplications' && auth.user?.role !== 'council')) return <CouncilViewState state="forbidden" />
   return children
 }
