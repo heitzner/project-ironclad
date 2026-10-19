@@ -1,8 +1,11 @@
 # Admin page structures
 
-These four pages reuse the existing shared layout, navbar, footer, page header,
-and progress bar. No application routes, authentication, services, student pages,
-dependencies, or build configuration were changed.
+The admin screens share `AdminShell`, `AdminSidebar`, `AdminWorkspaceStatus`, and
+the common navbar, footer, page header, tables, and dialogs.
+
+Page files are in `src/pages/admin`: `AdminDashboard.jsx`, `BookingManagement.jsx`,
+`EventManagement.jsx`, and `UserManagement.jsx`. `AdminWorkspace.jsx` selects the
+current page. See `../README.md` for the full frontend file guide.
 
 ## Open the preview
 
@@ -18,12 +21,13 @@ dependencies, or build configuration were changed.
 If port 5173 is already serving a different project, leave it running and use
 `npm run dev -- --port 5174 --strictPort`, then replace 5173 with 5174 in the URL.
 
-Saving is deliberately disabled in this preview. There are no demo credentials,
-invented users, seeded bookings, or simulated successful updates.
+Saving is disabled in this standalone design preview. It supplies no records or
+user account. The main app has separately requested browser-only test accounts in
+`src/components/auth/test-auth.js`; they do not provide production authorization.
 
 ## Future integration contract
 
-Integration is outside the authorized page-only scope. Each page accepts:
+Live data and mutations are supplied through the following page props:
 
 - `user`: validated server account `{ id, role, disabled? }`.
 - `onNavigate(section)`: connect to application routing later.
