@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { ChevronDown, CircleUserRound, Menu, X } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
+import LogIn from '../auth/LogIn.jsx'
+import { signOutTestAccount, useTestUser } from '../auth/test-auth.js'
 
 const roleLinks = {
   student: [
@@ -9,20 +11,27 @@ const roleLinks = {
     { label: 'Booking', to: '/booking' },
     { label: 'Archive', to: '/archive' },
   ],
-  council: [],
-  admin: [],
+  council: [{ label: 'Council workspace', to: '/news-feed' }],
+  admin: [{ label: 'Admin dashboard', to: '/news-feed' }],
   public: [],
 }
 
-function Navbar({ role = 'public', user = null, onSignOut, navigationLinks, homeTo = '/' }) {
+function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSignOut, navigationLinks, homeTo = '/' }) {
+  const testUser = useTestUser()
+  const customNavigation = navigationLinks !== undefined
+  // Council supplies its own session and capability-based links, including when signed out.
+  const user = customNavigation ? suppliedUser : suppliedUser ?? testUser
+  const role = customNavigation ? suppliedRole : user?.role ?? suppliedRole
+  const testSession = !customNavigation && user?.testAccount
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const navigationTrigger = useRef(null)
   const userTrigger = useRef(null)
   const links = navigationLinks ?? roleLinks[role] ?? []
-  const customNavigation = navigationLinks !== undefined
   const displayName = user ? user.name || 'Signed in' : 'Signed out'
-  const program = user?.program
+  const program = testSession ? `${role.toUpperCase()} · Test session` : user?.program
 
   return (
     <nav
@@ -76,6 +85,15 @@ function Navbar({ role = 'public', user = null, onSignOut, navigationLinks, home
               {navigationOpen ? <X aria-hidden="true" className="h-6 w-6" /> : <Menu aria-hidden="true" className="h-6 w-6" />}
             </button>
           )}
+          {!user && !customNavigation ? (
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
+              className="min-h-11 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Sign in
+            </button>
+          ) : (
           <div className="relative">
           <button
             ref={userTrigger}
@@ -112,10 +130,14 @@ function Navbar({ role = 'public', user = null, onSignOut, navigationLinks, home
               <button
                 type="button"
                 onClick={() => {
-                  onSignOut?.()
+                  if (onSignOut) onSignOut()
+                  else if (testSession) {
+                    signOutTestAccount()
+                    navigate('/news-feed')
+                  }
                   setMenuOpen(false)
                 }}
-                disabled={!onSignOut}
+                disabled={!onSignOut && !testSession}
                 className="block min-h-11 w-full rounded-control px-3 py-2 text-left text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Sign out
@@ -123,6 +145,7 @@ function Navbar({ role = 'public', user = null, onSignOut, navigationLinks, home
             </div>
           )}
           </div>
+          )}
         </div>
       </div>
       {navigationOpen && (
@@ -139,6 +162,15 @@ function Navbar({ role = 'public', user = null, onSignOut, navigationLinks, home
             </NavLink>
           ))}
         </div>
+      )}
+      {loginOpen && !customNavigation && (
+        <LogIn
+          onClose={() => setLoginOpen(false)}
+          onSignedIn={() => {
+            setLoginOpen(false)
+            navigate('/news-feed')
+          }}
+        />
       )}
     </nav>
   )
