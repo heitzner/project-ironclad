@@ -1,7 +1,9 @@
 import BookingIcon from './BookingIcon'
 import { clockParts, formatDate, formatTime, overlaps, timeRange } from './booking.logic'
 
-export default function VenueDetails({ view, date, shift, schedules, now, children }) {
+export default function VenueDetails({ view, date, shift, schedules, now, loading = false, error = null, onRetry, children }) {
+  if (loading) return <aside className="booking-empty-details" aria-live="polite"><h2>Loading venue details</h2><p>Fetching the timetable and available reservation windows.</p></aside>
+  if (error) return <aside className="booking-empty-details" role="alert"><h2>Unable to load venue details</h2><p>{error.message}</p><button type="button" onClick={onRetry}>Retry</button></aside>
   if (!view) return <aside className="booking-empty-details" aria-labelledby="booking-empty-title"><div className="booking-empty-symbol"><BookingIcon name="4651a" /></div><h2 id="booking-empty-title">No Venue Selected</h2><p>Select a room from the catalog to view its timetable, current occupancy, and to configure your reservation.</p><button type="button" disabled>Select a Venue to Lock</button></aside>
   const { room, active, entries, windows, status, label } = view
   const current = clockParts(now)
