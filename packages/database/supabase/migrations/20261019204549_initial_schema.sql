@@ -1,38 +1,23 @@
--- =====================================================================
--- IronClad: Migration 1 (initial schema)
--- Identity (profiles + roles), rooms, room bookings, RLS.
--- =====================================================================
+-- IronClad: initial schema (profiles, rooms, time slots, bookings, RLS)
 
-
--- ---------------------------------------------------------------------
--- 0. Cleanup: leftovers from the earlier Prisma experiment
---    "User" was already dropped by hand; IF EXISTS makes that line a
---    harmless no-op while keeping the removal recorded in git.
--- ---------------------------------------------------------------------
+-- Cleanup: leftovers from the earlier Prisma experiment
 drop table if exists public."User";
 drop type  if exists public."Role";
 
 
--- ---------------------------------------------------------------------
--- 1. Extensions and a private schema
---    btree_gist: lets one constraint compare a room id (=) and a time
---    range (overlap) together; needed for the double-booking guard.
---    private: holds helper functions; it is NOT exposed by the API.
--- ---------------------------------------------------------------------
+-- Extensions and private schema (not exposed by the API)
 create extension if not exists btree_gist with schema extensions;
 
 create schema if not exists private;
 grant usage on schema private to authenticated;
 
 
--- ---------------------------------------------------------------------
--- 2. Enums
--- ---------------------------------------------------------------------
+-- Enums
 create type public.user_role as enum (
   'MIS_ADMIN',
-  'TEMP_ADMIN',   -- testing and defense demo only; retire before deployment
-  'COUNCIL',      -- can book rooms and upload events; division required
-  'STUDENT'       -- can book rooms (e.g. the class president of a section)
+  'TEMP_ADMIN',   -- testing and demo only; retire before deployment
+  'COUNCIL',
+  'STUDENT'
 );
 
 create type public.council_division as enum (
@@ -51,9 +36,7 @@ create type public.booking_status as enum (
 );
 
 
--- ---------------------------------------------------------------------
--- 3. Shared trigger: keep updated_at current on every UPDATE
--- ---------------------------------------------------------------------
+-- Trigger: keep updated_at current
 create function private.set_updated_at()
 returns trigger
 language plpgsql
@@ -66,19 +49,17 @@ end;
 $$;
 
 
--- ---------------------------------------------------------------------
--- 4. profiles: one row per login account (auth.users)
--- ---------------------------------------------------------------------
+-- profiles
 create table public.profiles (
   id               uuid primary key references auth.users (id) on delete cascade,
   full_name        text not null default '',
   role             public.user_role not null default 'STUDENT',
   council_division public.council_division,
-  section          text,                                  -- e.g. 'BSCS 2A'
+  section          text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now(),
 
-  -- A division is required for COUNCIL and forbidden for everyone else.
+  -- division required for COUNCIL, forbidden otherwise
   constraint profiles_council_division_matches_role
     check ((role = 'COUNCIL') = (council_division is not null))
 );
@@ -88,9 +69,7 @@ create trigger profiles_set_updated_at
   for each row execute function private.set_updated_at();
 
 
--- Auto-create a profile when someone signs up.
--- Role is ALWAYS the default (STUDENT); it is never read from sign-up
--- metadata, because users control that metadata themselves.
+-- Create a profile on sign-up (role always defaults to STUDENT)
 create function private.handle_new_user()
 returns trigger
 language plpgsql
@@ -109,11 +88,7 @@ create trigger on_auth_user_created
   for each row execute function private.handle_new_user();
 
 
--- ---------------------------------------------------------------------
--- 5. Role helpers used by RLS policies
---    SECURITY DEFINER lets them read profiles without tripping the
---    profiles RLS policies (which would otherwise loop on themselves).
--- ---------------------------------------------------------------------
+-- Role helpers for RLS policies
 create function private.has_role(variadic roles public.user_role[])
 returns boolean
 language sql
@@ -139,7 +114,6 @@ as $$
   select private.has_role('MIS_ADMIN', 'TEMP_ADMIN');
 $$;
 
--- OPERATIONAL is the council division that manages council membership.
 create function private.is_operational()
 returns boolean
 language sql
@@ -164,12 +138,10 @@ grant  execute on function private.is_admin() to authenticated;
 grant  execute on function private.is_operational() to authenticated;
 
 
--- ---------------------------------------------------------------------
--- 6. rooms
--- ---------------------------------------------------------------------
+-- rooms
 create table public.rooms (
   id          bigint generated always as identity primary key,
-  code        text not null unique,                       -- e.g. 'CSD-301'
+  code        text not null unique,
   name        text not null,
   building    text,
   capacity    integer check (capacity is null or capacity > 0),
@@ -183,15 +155,10 @@ create trigger rooms_set_updated_at
   for each row execute function private.set_updated_at();
 
 
--- ---------------------------------------------------------------------
--- 7. time_slots: the fixed periods rooms can be booked for
---    Managed by admins. day_of_week uses ISO numbering
---    (1 = Monday ... 7 = Sunday); NULL means the slot exists every day.
---    Times are campus local time (Asia/Manila).
--- ---------------------------------------------------------------------
+-- time_slots (day_of_week: 1 = Monday ... 7 = Sunday, NULL = every day)
 create table public.time_slots (
   id           bigint generated always as identity primary key,
-  label        text not null,                             -- e.g. 'Period 1'
+  label        text not null,
   day_of_week  smallint check (day_of_week between 1 and 7),
   start_time   time not null,
   end_time     time not null,
@@ -208,13 +175,7 @@ create trigger time_slots_set_updated_at
   for each row execute function private.set_updated_at();
 
 
--- ---------------------------------------------------------------------
--- 8. room_bookings
---    Users pick a room, a date, and a slot. starts_at and ends_at are
---    filled in automatically from the slot (see trigger below); they
---    exist so the double-booking guard and the live occupancy view can
---    work with real timestamps.
--- ---------------------------------------------------------------------
+-- room_bookings (starts_at and ends_at are derived from the slot)
 create table public.room_bookings (
   id           bigint generated always as identity primary key,
   room_id      bigint not null references public.rooms (id),
@@ -233,10 +194,7 @@ create table public.room_bookings (
   constraint room_bookings_valid_time
     check (ends_at > starts_at),
 
-  -- Double-booking guard (first come, first served):
-  -- no two PENDING or APPROVED bookings of the same room may overlap.
-  -- '[)' means start-inclusive, end-exclusive, so back-to-back bookings
-  -- (10:00-11:00 then 11:00-12:00) are allowed.
+  -- no overlapping pending/approved bookings for the same room
   constraint room_bookings_no_overlap
     exclude using gist (
       room_id extensions.gist_int8_ops with =,
@@ -253,8 +211,7 @@ create trigger room_bookings_set_updated_at
   for each row execute function private.set_updated_at();
 
 
--- Fill starts_at / ends_at from the chosen slot and validate the choice.
--- Any starts_at / ends_at sent by the client is overwritten.
+-- Derive starts_at / ends_at from the slot and validate the booking
 create function private.apply_booking_slot()
 returns trigger
 language plpgsql
@@ -294,16 +251,14 @@ create trigger room_bookings_apply_slot
   for each row execute function private.apply_booking_slot();
 
 
--- ---------------------------------------------------------------------
--- 9. Row Level Security (on for every table, from day one)
--- ---------------------------------------------------------------------
+-- Row Level Security
 alter table public.profiles      enable row level security;
 alter table public.rooms         enable row level security;
 alter table public.time_slots    enable row level security;
 alter table public.room_bookings enable row level security;
 
 
--- profiles -------------------------------------------------------------
+-- profiles policies
 create policy "profiles: read own; admins read all; OPERATIONAL reads students and council"
   on public.profiles for select
   to authenticated
@@ -319,22 +274,12 @@ create policy "profiles: update own"
   using (id = (select auth.uid()))
   with check (id = (select auth.uid()));
 
--- Column-level lock: through the API a user may only edit these two
--- columns directly. role and council_division change only through
--- public.set_council_membership() below, the dashboard, or the backend
--- (secret key).
+-- users may only edit these columns directly
 revoke update on public.profiles from anon, authenticated;
 grant  update (full_name, section) on public.profiles to authenticated;
 
 
--- Council membership management (called from the app as an RPC).
--- Allowed callers: OPERATIONAL council members and admins.
--- Rules:
---   * can only assign STUDENT or COUNCIL (never an admin role)
---   * can only change accounts that are currently STUDENT or COUNCIL
---   * OPERATIONAL members cannot change their own role
---   * switching to STUDENT clears the division automatically
---   * COUNCIL without a division is rejected by the table constraint
+-- Council role management (OPERATIONAL and admins; STUDENT/COUNCIL only)
 create function public.set_council_membership(
   target_id    uuid,
   new_role     public.user_role,
@@ -388,7 +333,7 @@ revoke execute on function public.set_council_membership(uuid, public.user_role,
 grant  execute on function public.set_council_membership(uuid, public.user_role, public.council_division) to authenticated;
 
 
--- rooms ----------------------------------------------------------------
+-- rooms policies
 create policy "rooms: any signed-in user can read"
   on public.rooms for select
   to authenticated
@@ -411,7 +356,7 @@ create policy "rooms: admins delete"
   using (private.is_admin());
 
 
--- time_slots -----------------------------------------------------------
+-- time_slots policies
 create policy "slots: any signed-in user can read"
   on public.time_slots for select
   to authenticated
@@ -434,15 +379,12 @@ create policy "slots: admins delete"
   using (private.is_admin());
 
 
--- room_bookings --------------------------------------------------------
--- Everyone signed in can see bookings: needed for the live occupancy view.
+-- room_bookings policies
 create policy "bookings: any signed-in user can read"
   on public.room_bookings for select
   to authenticated
   using (true);
 
--- Every role can request a room, only as themselves, and only as a
--- fresh pending request.
 create policy "bookings: any role can request"
   on public.room_bookings for insert
   to authenticated
@@ -454,7 +396,6 @@ create policy "bookings: any role can request"
     and reviewed_at is null
   );
 
--- The requester can cancel their own active booking (and nothing else).
 create policy "bookings: requester can cancel own"
   on public.room_bookings for update
   to authenticated
@@ -467,11 +408,8 @@ create policy "bookings: requester can cancel own"
     and status = 'cancelled'
   );
 
--- Admins approve, reject, or adjust any booking.
 create policy "bookings: admins update"
   on public.room_bookings for update
   to authenticated
   using (private.is_admin())
   with check (private.is_admin());
-
--- No DELETE policy: bookings are kept as history; cancel instead.
