@@ -1,0 +1,12 @@
+{
+  "family": "Poppins",
+  "source": "https://github.com/google/fonts/tree/main/ofl/poppins",
+  "retrieved": "2026-10-19",
+  "license": "OFL.txt",
+  "files": {
+    "Poppins-Regular.ttf": 400,
+    "Poppins-Medium.ttf": 500,
+    "Poppins-SemiBold.ttf": 600,
+    "Poppins-Bold.ttf": 700
+  }
+}

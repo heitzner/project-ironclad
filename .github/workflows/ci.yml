@@ -22,4 +22,4 @@ jobs:
         run: npm ci
 
       - name: Lint Frontend
-        run: npm run lint --workspace=apps/web
+        run: npm run lint --workspace=apps/web/Frontend

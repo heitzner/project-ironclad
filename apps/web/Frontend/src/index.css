@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+body { margin: 0; }
+#root { min-height: 100svh; }
