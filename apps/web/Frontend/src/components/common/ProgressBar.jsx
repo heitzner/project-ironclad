@@ -1,10 +1,11 @@
-function ProgressBar({ value = 0 }) {
+function ProgressBar({ value = 0, label = 'Progress', valueText }) {
   const progress = Math.min(100, Math.max(0, Number(value) || 0))
 
   return (
     <div
       role="progressbar"
-      aria-label="Progress"
+      aria-label={label}
+      aria-valuetext={valueText}
       aria-valuenow={progress}
       aria-valuemin={0}
       aria-valuemax={100}
