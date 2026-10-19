@@ -6,16 +6,20 @@ import { errorMiddleware, HttpError } from './http/errors.js';
 import {
   parseAdminRequestQuery,
   parseAdminVenueQuery,
+  parseCouncilRoleBody,
   parseDecisionBody,
   parseDetailsQuery,
   parseListQuery,
   parseLockBody,
   parseOccupancyQuery,
   parseReservationConfigQuery,
+  parseEventBody,
+  parseVersionBody,
   parseVacancyQuery,
 } from './http/validation.js';
 import { InMemoryBookingRepository } from './repositories/inMemoryBookingRepository.js';
 import { AdminBookingService } from './services/adminBookingService.js';
+import { AdminPortalService } from './services/adminPortalService.js';
 import { BookingService } from './services/bookingService.js';
 
 export function createApp({ repository, settings = config } = {}) {
@@ -27,10 +31,24 @@ export function createApp({ repository, settings = config } = {}) {
     bookingService,
     settings,
   );
+  const adminPortalService = new AdminPortalService(activeRepository, settings);
   const requireAdmin = createAdminAccessMiddleware(activeRepository, settings);
   const app = express();
 
   app.disable('x-powered-by');
+  app.use((request, response, next) => {
+    const origin = request.get('origin');
+    const localDevelopmentOrigin = settings.cors?.allowLocalDevelopmentOrigins
+      && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '');
+    if (origin && (settings.cors?.allowedOrigins?.includes(origin) || localDevelopmentOrigin)) {
+      response.set('Access-Control-Allow-Origin', origin);
+      response.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,OPTIONS');
+      response.set('Access-Control-Allow-Headers', 'Content-Type,x-ironclad-test-session');
+      response.set('Vary', 'Origin');
+      if (request.method === 'OPTIONS') return response.sendStatus(204);
+    }
+    return next();
+  });
   app.use(express.json({ limit: '32kb' }));
 
   app.use('/admin', requireAdmin);
@@ -95,6 +113,54 @@ export function createApp({ repository, settings = config } = {}) {
     } catch (error) {
       next(error);
     }
+  });
+
+  app.get('/admin/events', (_request, response, next) => {
+    try { response.json(adminPortalService.listEvents()); } catch (error) { next(error); }
+  });
+
+  app.post('/admin/events', (request, response, next) => {
+    try {
+      response.status(201).json(adminPortalService.createEvent(
+        parseEventBody(request.body),
+        request.adminSession,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.put('/admin/events/:eventId', (request, response, next) => {
+    try {
+      response.json(adminPortalService.updateEvent(
+        request.params.eventId,
+        parseEventBody(request.body, { requireVersion: true }),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/admin/events/:eventId/complete', (request, response, next) => {
+    try {
+      response.json(adminPortalService.completeEvent(
+        request.params.eventId,
+        parseVersionBody(request.body),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/admin/members', (_request, response, next) => {
+    try { response.json(adminPortalService.listMembers()); } catch (error) { next(error); }
+  });
+
+  app.get('/admin/council-roles', (_request, response, next) => {
+    try { response.json(adminPortalService.listRoles()); } catch (error) { next(error); }
+  });
+
+  app.patch('/admin/members/:memberId/council-role', (request, response, next) => {
+    try {
+      response.json(adminPortalService.setCouncilRole(
+        request.params.memberId,
+        parseCouncilRoleBody(request.body),
+      ));
+    } catch (error) { next(error); }
   });
 
   app.get('/venues', (request, response, next) => {

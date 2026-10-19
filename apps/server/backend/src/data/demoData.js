@@ -181,11 +181,77 @@ export function createDemoData(demoWeekStart) {
       dataset_label: 'Demo week',
     }));
 
+  const councilRoles = [
+    ['ROLE-001', 'Council President'],
+    ['ROLE-002', 'Council Secretary'],
+    ['ROLE-003', 'Events Coordinator'],
+  ].map(([role_id, name]) => ({
+    role_id,
+    name,
+    scope: 'council',
+    is_demo: true,
+    dataset_label: 'Demo week',
+  }));
+
+  const members = students.map((student, index) => ({
+    member_id: student.student_id,
+    student_id: student.student_id,
+    full_name: student.full_name,
+    program_section: student.program_section,
+    status: 'active',
+    role: index === 1 ? 'student' : 'council',
+    council_role_id: index === 0 ? 'ROLE-001' : index === 2 ? 'ROLE-003' : null,
+    disabled: false,
+    version: 1,
+    is_demo: true,
+    dataset_label: 'Demo week',
+  }));
+
+  const events = [
+    {
+      event_id: 'EVENT-DEMO-0001',
+      title: 'CSD Fair Badminton Tryout',
+      description: 'Open tryouts for students joining the CSD Fair badminton team.',
+      category: 'Sports',
+      venue_id: 'Room 104',
+      starts_at: `${addDays(demoWeekStart, 3)}T13:00:00+08:00`,
+      ends_at: `${addDays(demoWeekStart, 3)}T15:00:00+08:00`,
+      status: 'scheduled',
+      registered: 28,
+      capacity: 60,
+      banner_url: null,
+      version: 1,
+      created_by: 'Test Administrator',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+    {
+      event_id: 'EVENT-DEMO-0002',
+      title: 'Student Technology Forum',
+      description: 'A campus forum on emerging computing technologies and student projects.',
+      category: 'Academic',
+      venue_id: 'Room 101',
+      starts_at: `${addDays(demoWeekStart, 5)}T16:00:00+08:00`,
+      ends_at: `${addDays(demoWeekStart, 5)}T18:00:00+08:00`,
+      status: 'scheduled',
+      registered: 34,
+      capacity: 50,
+      banner_url: null,
+      version: 1,
+      created_by: 'Test Administrator',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+  ];
+
   return {
     venues,
     scheduleEntries,
     reservations,
     students,
+    members,
+    councilRoles,
+    events,
     adminSession: {
       full_name: 'Test Administrator',
       role: 'ADMIN',

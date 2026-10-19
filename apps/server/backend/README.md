@@ -40,11 +40,24 @@ non-admin session returns 403.
 - `GET /admin/booking-requests/:reservationId`
 - `POST /admin/booking-requests/:reservationId/approve`
 - `POST /admin/booking-requests/:reservationId/reject`
+- `GET /admin/events`
+- `POST /admin/events`
+- `PUT /admin/events/:eventId`
+- `POST /admin/events/:eventId/complete`
+- `GET /admin/members`
+- `GET /admin/council-roles`
+- `PATCH /admin/members/:memberId/council-role`
 
 Approval and rejection bodies accept an optional `reason`. Decisions are final and append an
 entry to the shared in-memory decision log. The six seeded requests cover pending, approved, and
 rejected states. The admin lists default to `connection_state: connected`; setting
 `ADMIN_CONNECTION_STATE=not_connected` returns empty lists with no sample totals.
+
+Campus events and council-role assignments use the same authenticated in-memory repository. Event
+and member mutations include a numeric `version`; stale writes return `409 VERSION_CONFLICT`.
+Event venues are validated and overlapping active events in the same venue return `409`.
+The local Vite origin is allowed by `CORS_ALLOWED_ORIGINS` so browser reads and writes can include
+the configured admin test-session header.
 
 The lock body contains `room_code`, `date`, `start_time`, `end_time`, `purpose`, and `student_id`.
 It creates a `pending_approval` hold rather than an immediate lock. Pending holds block overlapping

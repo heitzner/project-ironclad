@@ -8,6 +8,9 @@ export class InMemoryBookingRepository {
     scheduleEntries,
     reservations,
     students,
+    members = [],
+    councilRoles = [],
+    events = [],
     adminSession,
     decisionLogs,
     calendar,
@@ -17,11 +20,15 @@ export class InMemoryBookingRepository {
     this.scheduleEntries = structuredClone(scheduleEntries);
     this.reservations = structuredClone(reservations);
     this.students = structuredClone(students);
+    this.members = structuredClone(members);
+    this.councilRoles = structuredClone(councilRoles);
+    this.events = structuredClone(events);
     this.adminSession = structuredClone(adminSession);
     this.decisionLogs = structuredClone(decisionLogs);
     this.calendar = structuredClone(calendar);
     this.dateOptions = [...dateOptions];
     this.nextReservationNumber = this.reservations.length + 1;
+    this.nextEventNumber = this.events.length + 1;
   }
 
   listVenues() {
@@ -63,6 +70,73 @@ export class InMemoryBookingRepository {
   findStudent(studentId) {
     const student = this.students.find((candidate) => candidate.student_id === studentId);
     return student ? structuredClone(student) : null;
+  }
+
+  listEvents() { return structuredClone(this.events); }
+
+  findEvent(eventId) {
+    const event = this.events.find((candidate) => candidate.event_id === eventId);
+    return event ? structuredClone(event) : null;
+  }
+
+  createEvent(input, performedBy) {
+    const event = {
+      event_id: `EVENT-${String(this.nextEventNumber).padStart(4, '0')}`,
+      ...structuredClone(input),
+      status: 'scheduled',
+      registered: 0,
+      capacity: this.findVenueByRoomCode(input.venue_id)?.capacity || 0,
+      banner_url: null,
+      version: 1,
+      created_by: performedBy,
+      is_demo: false,
+      dataset_label: null,
+    };
+    this.nextEventNumber += 1;
+    this.events.push(event);
+    return structuredClone(event);
+  }
+
+  updateEvent(eventId, expectedVersion, input) {
+    const event = this.events.find((candidate) => candidate.event_id === eventId);
+    if (!event) return { result: 'not_found' };
+    if (event.version !== expectedVersion) return { result: 'version_conflict', event: structuredClone(event) };
+    Object.assign(event, structuredClone(input), { version: event.version + 1 });
+    return { result: 'updated', event: structuredClone(event) };
+  }
+
+  completeEvent(eventId, expectedVersion) {
+    const event = this.events.find((candidate) => candidate.event_id === eventId);
+    if (!event) return { result: 'not_found' };
+    if (event.version !== expectedVersion) return { result: 'version_conflict', event: structuredClone(event) };
+    if (event.status === 'completed') return { result: 'already_completed', event: structuredClone(event) };
+    event.status = 'completed';
+    event.version += 1;
+    return { result: 'updated', event: structuredClone(event) };
+  }
+
+  listMembers() { return structuredClone(this.members); }
+
+  findMember(memberId) {
+    const member = this.members.find((candidate) => candidate.member_id === memberId);
+    return member ? structuredClone(member) : null;
+  }
+
+  listCouncilRoles() { return structuredClone(this.councilRoles); }
+
+  findCouncilRole(roleId) {
+    const role = this.councilRoles.find((candidate) => candidate.role_id === roleId);
+    return role ? structuredClone(role) : null;
+  }
+
+  setCouncilRole(memberId, expectedVersion, councilRoleId) {
+    const member = this.members.find((candidate) => candidate.member_id === memberId);
+    if (!member) return { result: 'not_found' };
+    if (member.version !== expectedVersion) return { result: 'version_conflict', member: structuredClone(member) };
+    member.council_role_id = councilRoleId;
+    member.role = councilRoleId ? 'council' : 'student';
+    member.version += 1;
+    return { result: 'updated', member: structuredClone(member) };
   }
 
   resolveTestSession(sessionId, { adminSessionId, nonAdminSessionId }) {

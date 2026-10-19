@@ -75,6 +75,10 @@ if (!['connected', 'not_connected'].includes(adminConnectionState)) {
   throw new Error('ADMIN_CONNECTION_STATE must be connected or not_connected');
 }
 
+const corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS
+  || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',').map((origin) => origin.trim()).filter(Boolean);
+
 export const config = Object.freeze({
   port: Number(process.env.PORT || 3000),
   timeZone: process.env.BOOKING_TIME_ZONE || 'Asia/Manila',
@@ -82,6 +86,10 @@ export const config = Object.freeze({
   purposeMaxLength,
   minSlotMinutes,
   defaultStudentId: '2022-10892',
+  cors: Object.freeze({
+    allowedOrigins: Object.freeze(corsAllowedOrigins),
+    allowLocalDevelopmentOrigins: process.env.CORS_ALLOW_LOCAL_DEVELOPMENT_ORIGINS !== 'false',
+  }),
   admin: Object.freeze({
     connectionState: adminConnectionState,
     sessionHeader: process.env.ADMIN_SESSION_HEADER || 'x-ironclad-test-session',

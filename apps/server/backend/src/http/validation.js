@@ -208,3 +208,65 @@ export function parseDecisionBody(body, settings) {
   }
   return { reason };
 }
+
+function requiredText(body, field, maxLength) {
+  const value = body?.[field];
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new HttpError(400, 'MISSING_FIELDS', `${field} is required`);
+  }
+  const result = value.trim();
+  if ([...result].length > maxLength) {
+    throw new HttpError(400, 'FIELD_TOO_LONG', `${field} must not exceed ${maxLength} characters`);
+  }
+  return result;
+}
+
+function version(value) {
+  if (!Number.isInteger(value) || value < 1) {
+    throw new HttpError(400, 'INVALID_VERSION', 'version must be a positive integer');
+  }
+  return value;
+}
+
+export function parseEventBody(body, { requireVersion = false } = {}) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new HttpError(400, 'INVALID_BODY', 'Request body must be a JSON object');
+  }
+  const title = requiredText(body, 'title', 120);
+  const description = requiredText(body, 'description', 2000);
+  const venueId = requiredText(body, 'venue_id', 50);
+  const startsAt = requiredText(body, 'starts_at', 50);
+  const endsAt = requiredText(body, 'ends_at', 50);
+  const start = Date.parse(startsAt);
+  const end = Date.parse(endsAt);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    throw new HttpError(400, 'INVALID_EVENT_TIME', 'starts_at and ends_at must be valid ISO datetimes');
+  }
+  if (end <= start) throw new HttpError(400, 'INVALID_EVENT_RANGE', 'ends_at must be after starts_at');
+  return {
+    title,
+    description,
+    venueId,
+    startsAt,
+    endsAt,
+    version: requireVersion ? version(body.version) : undefined,
+  };
+}
+
+export function parseVersionBody(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new HttpError(400, 'INVALID_BODY', 'Request body must be a JSON object');
+  }
+  return { version: version(body.version) };
+}
+
+export function parseCouncilRoleBody(body) {
+  const parsed = parseVersionBody(body);
+  if (body.council_role_id !== null && typeof body.council_role_id !== 'string') {
+    throw new HttpError(400, 'INVALID_COUNCIL_ROLE', 'council_role_id must be text or null');
+  }
+  return {
+    version: parsed.version,
+    councilRoleId: typeof body.council_role_id === 'string' ? body.council_role_id.trim() || null : null,
+  };
+}
