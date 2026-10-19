@@ -1,19 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import BookingPage from './pages/student/BookingPage'
-import { mockRooms, mockRequester, createMockSchedules, createMockRequestHandler } from './features/student-booking/booking.fixtures'
-import { clockParts } from './features/student-booking/booking.logic'
-
-const clock = () => new Date()
-const mockRequest = createMockRequestHandler({ rooms: mockRooms, getSchedules: () => createMockSchedules(clock()), clock })
+import { Navigate, Route, Routes } from 'react-router-dom'
+import Archive from './pages/student/Archive.jsx'
+import Booking from './pages/student/Booking.jsx'
+import NewsFeed from './pages/student/NewsFeed.jsx'
+import Profile from './pages/student/Profile.jsx'
 
 export default function App() {
-  const [today, setToday] = useState(() => clockParts(clock()).date)
-  useEffect(() => {
-    const timer = window.setInterval(() => setToday(clockParts(clock()).date), 30000)
-    return () => window.clearInterval(timer)
-  }, [])
-  const schedules = useMemo(() => createMockSchedules(new Date(`${today}T12:00:00+08:00`)), [today])
-
-  // The Student layout will compose its shared navbar and footer around this page.
-  return <BookingPage rooms={mockRooms} schedules={schedules} requester={mockRequester} clock={clock} onRequest={mockRequest} />
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/news-feed" replace />} />
+      <Route path="/news-feed" element={<NewsFeed />} />
+      <Route path="/booking" element={<Booking />} />
+      <Route path="/archive" element={<Archive />} />
+      <Route path="/profile" element={<Profile />} />
+    </Routes>
+  )
 }
