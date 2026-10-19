@@ -77,7 +77,7 @@ export default function LogIn({ onClose, onSignedIn }) {
         setView('created')
         setMessage('Test student account created. Sign in with your student ID and password. This account is available in this browser tab until it is closed.')
       } else {
-        await signInTestAccount(fields.get('studentId'), fields.get('password'))
+        await signInTestAccount(fields.get('studentId'), fields.get('password'), fields.get('remember') === 'on')
         onSignedIn?.()
         onClose()
       }
@@ -93,29 +93,35 @@ export default function LogIn({ onClose, onSignedIn }) {
   const toggleClass = 'min-h-11 rounded-control border border-white px-8 py-3 text-sm font-semibold hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
 
   return (
-    <dialog ref={dialog} data-signup={signUp} aria-labelledby={view === 'forms' ? `${id}-${signUp ? 'signup' : 'signin'}-title` : `${id}-${view}-title`}
+    <dialog ref={dialog} data-view={view} data-signup={signUp} aria-labelledby={view === 'forms' ? `${id}-${signUp ? 'signup' : 'signin'}-title` : `${id}-${view}-title`}
       aria-describedby={message ? view === 'forms' ? `${id}-${signUp ? 'signup' : 'signin'}-message` : `${id}-${view}-message` : undefined}
       onCancel={event => { event.preventDefault(); if (!busy) onClose() }}
       onClick={event => { if (!busy && event.target === event.currentTarget) onClose() }}
       className="ironclad-login m-auto max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-card border-0 bg-white p-0 text-textPrimary shadow-nav backdrop:bg-deep/60 backdrop:backdrop-blur-sm">
       <style>{`
+        .ironclad-login { width: min(770px, calc(100% - 32px)); max-width: 770px; }
+        .ironclad-login[data-view="forms"] { height: min(480px, calc(100svh - 32px)); }
         .ironclad-login .ic-stage { position: relative; overflow: hidden; }
-        .ironclad-login .ic-form { min-height: 540px; }
-        .ironclad-login .ic-signup { gap: 10px; }
+        .ironclad-login .ic-form { min-height: 0; gap: 10px; padding: 24px 28px; }
+        .ironclad-login .ic-form > img { width: 40px; height: 40px; flex-shrink: 0; }
+        .ironclad-login .ic-form > h2 { font-size: 22px; line-height: 28px; }
+        .ironclad-login .ic-form > p:empty { display: none; }
+        .ironclad-login .ic-form > * { flex-shrink: 0; }
+        .ironclad-login .ic-signup { justify-content: flex-start; padding-top: 28px; }
         .ironclad-login button:disabled { cursor: wait; opacity: .65; }
         .ironclad-login .ic-form[inert],
         .ironclad-login .ic-welcome[inert] { display: none; }
-        .ironclad-login .ic-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px 30px; text-align: center; }
+        .ironclad-login .ic-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px 28px; text-align: center; }
         @media (min-width: 768px) {
-          .ironclad-login .ic-stage { min-height: 940px; }
+          .ironclad-login .ic-stage { height: 480px; }
           .ironclad-login .ic-form,
-          .ironclad-login .ic-form[inert] { display: flex; position: absolute; top: 0; left: 0; width: 50%; height: 100%; min-height: 0; transition: transform .6s ease-in-out; }
+          .ironclad-login .ic-form[inert] { display: flex; position: absolute; top: 0; left: 0; width: 50%; height: 100%; min-height: 0; overflow-y: auto; scrollbar-width: thin; transition: transform .6s ease-in-out; }
           .ironclad-login .ic-signin { z-index: 2; }
           .ironclad-login .ic-signup { z-index: 1; opacity: 0; }
           .ironclad-login[data-signup="true"] .ic-signin { transform: translateX(100%); }
           .ironclad-login[data-signup="true"] .ic-signup { transform: translateX(100%); opacity: 1; z-index: 5; animation: ic-form-swap .6s; }
-          .ironclad-login .ic-overlay-window { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden; border-radius: 150px 0 0 150px; z-index: 6; transition: transform .6s ease-in-out, border-radius .6s ease-in-out; }
-          .ironclad-login[data-signup="true"] .ic-overlay-window { transform: translateX(-100%); border-radius: 0 150px 150px 0; }
+          .ironclad-login .ic-overlay-window { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden; border-radius: 64px 0 0 64px; z-index: 6; transition: transform .6s ease-in-out, border-radius .6s ease-in-out; }
+          .ironclad-login[data-signup="true"] .ic-overlay-window { transform: translateX(-100%); border-radius: 0 64px 64px 0; }
           .ironclad-login .ic-overlay { position: relative; left: -100%; width: 200%; height: 100%; transform: translateX(0); transition: transform .6s ease-in-out; }
           .ironclad-login[data-signup="true"] .ic-overlay { transform: translateX(50%); }
           .ironclad-login .ic-welcome,
@@ -212,7 +218,12 @@ export default function LogIn({ onClose, onSignedIn }) {
               </>}
               <PasswordField label="Password" name="password" autoComplete={registration ? 'new-password' : 'current-password'} minLength={registration ? 8 : undefined} fieldClass={fieldClass} />
               {registration && <PasswordField label="Confirm password" name="confirmPassword" autoComplete="new-password" minLength={8} fieldClass={fieldClass} />}
-              {!registration && <button type="button" onClick={() => { setMessage(''); setView('reset') }} className="min-h-11 self-end rounded-control text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Forgot Password?</button>}
+              {!registration && <div className="flex flex-wrap items-center justify-between gap-x-2">
+                <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[11px] font-medium text-textSecondary">
+                  <input type="checkbox" name="remember" className="h-4 w-4 rounded-chip accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" />Remember me
+                </label>
+                <button type="button" onClick={() => { setMessage(''); setView('reset') }} className="min-h-11 rounded-control text-[11px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Forgot Password?</button>
+              </div>}
               <p id={`${id}-${mode}-message`} role="status" className="text-xs leading-5 text-textSecondary">{inactive ? '' : message}</p>
               <button type="submit" disabled={busy} className={buttonClass}>{busy && !inactive ? 'Please wait…' : registration ? 'Sign Up' : 'Sign In'}</button>
               <p className="text-center text-[10px] leading-4 text-textMuted">Browser testing only · No production authentication</p>

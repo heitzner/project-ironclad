@@ -11,11 +11,11 @@ const accountsKey = 'ironclad-test-accounts-v1'
 const listeners = new Set()
 const normalize = value => String(value ?? '').trim().toUpperCase()
 
-function readStored(key, fallback) {
-  try { return JSON.parse(sessionStorage.getItem(key)) ?? fallback } catch { return fallback }
+function readStored(key, fallback, persistent = false) {
+  try { return JSON.parse((persistent ? localStorage : sessionStorage).getItem(key)) ?? fallback } catch { return fallback }
 }
 
-let currentUser = readStored(userKey, null)
+let currentUser = readStored(userKey, null) ?? readStored(userKey, null, true)
 
 function subscribe(listener) {
   listeners.add(listener)
@@ -30,9 +30,11 @@ function publicUser(account) {
   }
 }
 
-function setUser(user) {
-  if (user) sessionStorage.setItem(userKey, JSON.stringify(user))
-  else sessionStorage.removeItem(userKey)
+function setUser(user, remember = false) {
+  // Persist only the demo profile, never the entered password.
+  localStorage.removeItem(userKey)
+  sessionStorage.removeItem(userKey)
+  if (user) (remember ? localStorage : sessionStorage).setItem(userKey, JSON.stringify(user))
   currentUser = user
   listeners.forEach(listener => listener())
 }
@@ -47,12 +49,12 @@ export function useTestUser() {
   return useSyncExternalStore(subscribe, () => currentUser, () => null)
 }
 
-export async function signInTestAccount(studentId, password) {
+export async function signInTestAccount(studentId, password, remember = false) {
   const username = normalize(studentId)
   const fixed = testAccounts.find(account => account.studentId === username)
   if (fixed) {
     if (fixed.password !== password) throw new Error('Incorrect username or password.')
-    setUser(publicUser(fixed))
+    setUser(publicUser(fixed), remember)
     return
   }
   const accounts = readStored(accountsKey, [])
@@ -60,7 +62,7 @@ export async function signInTestAccount(studentId, password) {
   if (!account || await digest(password, account.salt) !== account.passwordHash) {
     throw new Error('Incorrect username or password.')
   }
-  setUser(publicUser(account))
+  setUser(publicUser(account), remember)
 }
 
 export async function registerTestStudent({ studentId, name, email, course, yearLevel, section, password, confirmPassword }) {
