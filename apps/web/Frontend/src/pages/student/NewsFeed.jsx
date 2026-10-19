@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Inbox, Newspaper, RefreshCw, WifiOff } from 'lucide-react'
+import { useTestUser } from '../../components/auth/test-auth.js'
 import PageHeader, { StatusBadge } from '../../components/common/PageHeader.jsx'
 import PageLayout from '../../components/common/PageLayout.jsx'
 import SearchBar from '../../components/common/SearchBar.jsx'
@@ -7,6 +8,7 @@ import NewsFeedCard from '../../components/student/NewsFeedCard.jsx'
 import NewsPostDialog from '../../components/student/NewsPostDialog.jsx'
 import { useNewsFeed } from '../../hooks/useNewsFeed.js'
 import { getNewsPost } from '../../services/newsFeed.js'
+import AdminWorkspace from '../admin/AdminWorkspace.jsx'
 
 function FeedMessage({ icon: Icon, title, message, action }) {
   return (
@@ -23,7 +25,7 @@ function FeedMessage({ icon: Icon, title, message, action }) {
   )
 }
 
-export default function NewsFeed() {
+function StudentNewsFeed({ user }) {
   const [draftQuery, setDraftQuery] = useState('')
   const [category, setCategory] = useState('')
   const [filters, setFilters] = useState({ q: '', category: '' })
@@ -61,7 +63,7 @@ export default function NewsFeed() {
   const posts = data?.data ?? []
 
   return (
-    <PageLayout role="student">
+    <PageLayout role={user?.role ?? 'student'} user={user}>
       <PageHeader
         icon={Newspaper}
         title="News Feed"
@@ -145,4 +147,14 @@ export default function NewsFeed() {
       />
     </PageLayout>
   )
+}
+
+export default function NewsFeed() {
+  const user = useTestUser()
+
+  if (user?.role === 'admin') {
+    return <AdminWorkspace user={user} />
+  }
+
+  return <StudentNewsFeed user={user} />
 }
