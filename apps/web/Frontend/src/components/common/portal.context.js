@@ -13,6 +13,7 @@ export function portalNavigation(auth) {
   if (auth.user?.role === 'admin') links.push({ label: 'Administration', to: '/admin' })
   if (auth.user?.role === 'student') links.push(
     { label: 'News Feed', to: '/news-feed', end: true },
+    { label: 'Events', to: '/events' },
     { label: 'Booking', to: '/booking' },
     { label: 'Archive', to: '/archive' },
   )

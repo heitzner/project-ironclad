@@ -8,6 +8,7 @@ import { usePortal, roleDestination } from './portal.context.js'
 const roleLinks = {
   student: [
     { label: 'News Feed', to: '/news-feed' },
+    { label: 'Events', to: '/events' },
     { label: 'Booking', to: '/booking' },
     { label: 'Archive', to: '/archive' },
   ],
@@ -31,6 +32,8 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
   const navigationTrigger = useRef(null)
   const userTrigger = useRef(null)
   const links = navigationLinks ?? roleLinks[role] ?? []
+  // The expanded Student menu needs the wide breakpoint to keep the shared header usable.
+  const wideNavigation = customNavigation && links.length > 5
   const displayName = user ? typeof user.name === 'string' && user.name.trim() ? user.name : 'Signed in' : 'Signed out'
   const program = typeof user?.program === 'string' ? user.program : typeof user?.program?.label === 'string' ? user.program.label : undefined
 
@@ -53,7 +56,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
           </span>
         </Link>
 
-        <div className={customNavigation ? 'hidden items-center gap-1 lg:flex' : 'hidden items-center gap-4 md:flex'}>
+        <div className={customNavigation ? `hidden items-center gap-1 ${wideNavigation ? 'xl:flex' : 'lg:flex'}` : 'hidden items-center gap-4 md:flex'}>
           {links.map(({ label, to, end }) => (
             <NavLink
               key={to}
@@ -81,7 +84,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
               aria-expanded={navigationOpen}
               aria-controls="student-mobile-navigation"
               onClick={() => { setNavigationOpen(open => !open); setMenuOpen(false) }}
-              className={`flex h-11 w-11 items-center justify-center rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${customNavigation ? 'lg:hidden' : 'md:hidden'}`}
+              className={`flex h-11 w-11 items-center justify-center rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${customNavigation ? (wideNavigation ? 'xl:hidden' : 'lg:hidden') : 'md:hidden'}`}
             >
               {navigationOpen ? <X aria-hidden="true" className="h-6 w-6" /> : <Menu aria-hidden="true" className="h-6 w-6" />}
             </button>
@@ -167,7 +170,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
         </div>
       </div>
       {navigationOpen && (
-        <div id="student-mobile-navigation" className={`absolute inset-x-0 top-full grid max-h-[calc(100svh-64px)] gap-1 overflow-y-auto bg-navbar px-4 py-3 shadow-nav ${customNavigation ? 'lg:hidden' : 'md:hidden'}`}>
+        <div id="student-mobile-navigation" className={`absolute inset-x-0 top-full grid max-h-[calc(100svh-64px)] gap-1 overflow-y-auto bg-navbar px-4 py-3 shadow-nav ${customNavigation ? (wideNavigation ? 'xl:hidden' : 'lg:hidden') : 'md:hidden'}`}>
           {links.map(({ label, to, end }) => (
             <NavLink
               key={to}

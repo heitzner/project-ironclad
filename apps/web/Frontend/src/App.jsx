@@ -1,6 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
 import AuthProvider from './context/AuthContext.jsx'
 import PortalProvider from './components/common/PortalProvider.jsx'
+import ProtectedRoute from './components/common/ProtectedRoute.jsx'
+import StudentProvider from './components/student/StudentProvider.jsx'
+import AccountReset from './pages/auth/AccountReset.jsx'
+import LoginModal from './pages/auth/LoginModal.jsx'
+import Support from './pages/public/Support.jsx'
+import AllEvents from './pages/student/AllEvents.jsx'
 import Archive from './pages/student/Archive.jsx'
 import Booking from './pages/student/Booking.jsx'
 import NewsFeed from './pages/student/NewsFeed.jsx'
@@ -18,19 +24,25 @@ export default function App(props) {
   return <PortalApp {...integration} />
 }
 
-function PortalApp({ session, loadSession, sessionKey, authActions, admin, council, viewer }) {
+function PortalApp({ session, loadSession, sessionKey, authActions, admin, council, viewer, student }) {
   return <AuthProvider session={session !== undefined ? session : council?.session} loadSession={loadSession ?? council?.loadSession} sessionKey={sessionKey ?? council?.sessionKey}>
     <PortalProvider authActions={authActions}>
-    <Routes>
-      <Route path="/" element={<ViewerPage {...viewer} />} />
-      <Route path="/news-feed" element={<NewsFeed />} />
-      <Route path="/booking" element={<Booking />} />
-      <Route path="/archive" element={<Archive />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/admin/*" element={<AdminWorkspace {...admin} />} />
-      <Route path="/council/*" element={<CouncilRoutes {...council} sharedSession />} />
-      <Route path="*" element={<PageLayout><PortalState state="not-found" /></PageLayout>} />
-    </Routes>
+      <StudentProvider value={student}>
+        <Routes>
+          <Route path="/" element={<ViewerPage {...viewer} />} />
+          <Route path="/login" element={<LoginModal />} />
+          <Route path="/account-reset" element={<AccountReset />} />
+          <Route path="/news-feed" element={<NewsFeed />} />
+          <Route path="/events" element={<ProtectedRoute roles={['student']}><AllEvents /></ProtectedRoute>} />
+          <Route path="/booking" element={<Booking />} />
+          <Route path="/archive" element={<ProtectedRoute roles={['student']}><Archive /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/admin/*" element={<AdminWorkspace {...admin} />} />
+          <Route path="/council/*" element={<CouncilRoutes {...council} sharedSession />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="*" element={<PageLayout><PortalState state="not-found" /></PageLayout>} />
+        </Routes>
+      </StudentProvider>
     </PortalProvider>
   </AuthProvider>
 }

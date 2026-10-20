@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import { normalizeSession } from '../../context/session.js'
@@ -12,12 +12,13 @@ export default function PortalProvider({ children, authActions }) {
   const [login, setLogin] = useState(null)
   const previousPage = useRef(null)
   const scope = JSON.stringify([auth.status, auth.user?.id, auth.user?.role, auth.user?.disabled, auth.user?.status, auth.user?.program, auth.user?.council, auth.user?.councilId, auth.capabilities])
+  const openLogin = useCallback((mode = 'signin') => setLogin({ mode, scope }), [scope])
   useEffect(() => {
     const next = `${scope}:${pathname}`
     if (previousPage.current !== null && previousPage.current !== next) document.getElementById('portal-content')?.focus({ preventScroll: true })
     previousPage.current = next
   }, [scope, pathname])
-  return <PortalContext.Provider value={{ authActions, openLogin: (mode = 'signin') => setLogin({ mode, scope }) }}>
+  return <PortalContext.Provider value={{ authActions, openLogin }}>
     <div key={scope}>{children}</div>
     {login?.scope === scope && <LogIn
       initialMode={login.mode}
