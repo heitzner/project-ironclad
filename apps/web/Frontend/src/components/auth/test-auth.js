@@ -168,3 +168,15 @@ export async function registerTestStudent({
 export function signOutTestAccount() {
   setUser(null)
 }
+
+// Keep the three supplied accounts available with their original credentials.
+export async function changeTestPassword(user, currentPassword, newPassword) {
+  if (!user?.id) throw new Error('Sign in before changing your password.')
+  if (testAccounts.some(account => account.id === user.id)) throw new Error('The three supplied account credentials are fixed. Their passwords cannot be changed.')
+  if (newPassword.length < 8) throw new Error('Use at least 8 characters for your new password.')
+  const accounts = readStored(accountsKey, [])
+  const account = accounts.find(item => item.id === user.id)
+  if (!account || await digest(currentPassword, account.salt) !== account.passwordHash) throw new Error('The current password is incorrect.')
+  account.passwordHash = await digest(newPassword, account.salt)
+  sessionStorage.setItem(accountsKey, JSON.stringify(accounts))
+}

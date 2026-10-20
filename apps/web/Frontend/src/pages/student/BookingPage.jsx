@@ -77,13 +77,13 @@ export default function BookingPage({ rooms, schedules, requester, clock = syste
     setRequestState('submitting')
     try {
       const result = await onRequest(snapshot)
-      if (!result?.id?.startsWith('DEMO-') || result.status !== 'pending') throw new Error('The demo handler returned an invalid response. Please try again.')
+      if (typeof result?.id !== 'string' || !result.id.trim() || !['pending', 'approved'].includes(result.status)) throw new Error('The reservation response is incomplete. Please try again.')
       if (!mountedRef.current) return
       setLastRequest({ ...snapshot, ...result })
       setRequestState('pending-confirmation')
     } catch (failure) {
       if (!mountedRef.current) return
-      setError({ field: failure?.code === 'CONFLICT' ? 'slot' : undefined, message: failure?.message || 'The demo request failed. Please try again.' })
+      setError({ field: failure?.code === 'CONFLICT' ? 'slot' : undefined, message: failure?.message || 'The reservation request failed. Please try again.' })
       setRequestState(failure?.code === 'CONFLICT' ? 'conflict' : 'error')
       setNow(clock())
       if (failure?.code === 'CONFLICT') setDraft(previous => ({ ...previous, slotId: '' }))
@@ -100,7 +100,7 @@ export default function BookingPage({ rooms, schedules, requester, clock = syste
 
   return <main className="student-booking" aria-labelledby="booking-title">
     <BookingToolbar dates={dates} date={date} shift={draft.shift} counts={counts} busy={busy} onChange={changeDraft} />
-    <div className="booking-workspace"><div className="booking-left-panel"><VenueCatalog views={visible} total={rooms.length} draft={draft} selectedId={selected?.room.id} busy={busy} onChange={changeDraft} onSelect={roomId => changeDraft({ roomId })} /><BookingNotice onOpenGuidelines={onOpenGuidelines} busy={busy} /></div>
+    <div className="booking-workspace"><div className="booking-left-panel"><VenueCatalog floors={[...new Set(rooms.map(room => room.floor))]} views={visible} total={rooms.length} draft={draft} selectedId={selected?.room.id} busy={busy} onChange={changeDraft} onSelect={roomId => changeDraft({ roomId })} /><BookingNotice onOpenGuidelines={onOpenGuidelines} busy={busy} /></div>
       <VenueDetails view={selected} date={date} shift={draft.shift} schedules={schedules} now={now}>{selected && <ReservationForm key={selected.room.id} requester={requester} view={selected} purpose={draft.purpose} slots={slots} slotId={slotId} error={error} busy={busy} formRef={formRef} onChange={changeDraft} onSubmit={submitRequest} />}</VenueDetails>
     </div>
     <BookingRequestDialog request={requestState === 'pending-confirmation' ? lastRequest : null} returnFocusRef={requestTriggerRef} onClose={closeConfirmation} />

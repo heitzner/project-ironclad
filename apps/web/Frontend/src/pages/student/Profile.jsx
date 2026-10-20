@@ -20,7 +20,9 @@ import { useStudent } from '../../components/student/student.context.js'
 import useStudentAction from '../../components/student/useStudentAction.js'
 
 function formatSyncTime(dateString) {
-  return dateString || 'Not yet synced'
+  if (!dateString) return 'No changes saved yet'
+  if (!Number.isFinite(Date.parse(dateString))) return dateString
+  return `${new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(dateString))} PHT`
 }
 
 // Page shell: resolves auth and profile states before showing the form.
@@ -38,11 +40,11 @@ export function Profile() {
 
   return (
     <PageLayout role="student" user={auth.user}>
-      <div className="mx-auto w-full max-w-[960px] flex flex-col gap-3">
+      <div className="mx-auto flex w-full min-w-0 flex-col gap-3">
         <Breadcrumb
           items={[
             { label: 'Portal', to: '/' },
-            { label: 'Account Settings & Student Profile' },
+            { label: 'Account Settings & Profile' },
           ]}
           separator="slash"
           showHomeIcon={true}
@@ -148,14 +150,14 @@ export function ProfileForm({ profile, onSaved }) {
   }
 
   return (
-        <form onSubmit={handleSaveChanges} className="rounded-3xl bg-cardBg p-6 shadow-card border border-track/30" aria-busy={saving || undefined}>
+        <form onSubmit={handleSaveChanges} className="rounded-panel bg-cardBg p-4 sm:p-6 shadow-card border border-track/30" aria-busy={saving || undefined}>
           {/* Card Header */}
           <div className="flex items-start gap-3.5 pb-5 border-b border-deep/10">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-dark text-white shadow-sm">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-[20px] font-bold text-textPrimary leading-tight">
+              <h1 className="text-[18px] font-bold text-textPrimary leading-tight">
                 Account & Identity Settings
               </h1>
               <p className="mt-0.5 text-[12px] text-textSecondary">
@@ -186,7 +188,7 @@ export function ProfileForm({ profile, onSaved }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FieldCard
                   id="profile-fullname"
-                  label="Student Full Name"
+                  label="Full Name"
                   value={profile.fullName}
                   isLocked={true}
                 />
@@ -242,7 +244,7 @@ export function ProfileForm({ profile, onSaved }) {
             </div>
 
             {/* 4. Security Settings */}
-            <div className="space-y-3">
+            <fieldset disabled={profile.passwordManaged} className="min-w-0 space-y-3">
               <div className="flex items-center gap-1.5 text-textPrimary font-semibold text-[15px]">
                 <Lock className="h-4 w-4 text-primary" aria-hidden="true" />
                 <span>Security Settings</span>
@@ -257,7 +259,8 @@ export function ProfileForm({ profile, onSaved }) {
                 onConfirmPasswordChange={setConfirmPassword}
                 error={passwordError}
               />
-            </div>
+            </fieldset>
+            {profile.passwordManaged && <p className="text-xs leading-5 text-textSecondary">The three supplied account passwords stay fixed so each role remains accessible.</p>}
 
             {/* Feedback messages */}
             {(saveError || mutation.error) && (

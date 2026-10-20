@@ -61,7 +61,7 @@ export function ArchiveContent({ resource: archive }) {
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-1">
           <div className="max-w-[700px]">
-            <h1 className="text-[28px] lg:text-[30px] font-bold tracking-tight text-textPrimary leading-tight">
+            <h1 className="text-[28px] font-semibold tracking-[-0.7px] text-textPrimary leading-tight">
               Old Events History & Archive Records
             </h1>
             <p className="mt-1 text-[12px] leading-5 text-textSecondary">

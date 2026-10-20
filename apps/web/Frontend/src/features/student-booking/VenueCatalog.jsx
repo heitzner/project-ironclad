@@ -21,14 +21,13 @@ function Badge({ view, selected = false }) {
   return <span className={`booking-badge ${selected ? 'selected' : view.status}`}>{selected ? <><BookingIcon name="fc23e" />Selected Venue</> : view.label}</span>
 }
 
-export default function VenueCatalog({ views, total, draft, selectedId, busy, onChange, onSelect }) {
+export default function VenueCatalog({ views, total, floors = [1, 2, 3], draft, selectedId, busy, onChange, onSelect }) {
   const [filterOpen, setFilterOpen] = useState(false)
   return <section className="booking-catalog" aria-label="Browse venues">
     <div className="booking-filter-strip">
       <div className="booking-floors" role="group" aria-label="Filter by floor">
         <button type="button" aria-pressed={draft.floor === 'all'} disabled={busy} onClick={() => onChange({ floor: 'all' })}><span>All Venues</span><small>({total})</small></button>
-        {[1, 2, 3].map(floor => <button type="button" key={floor} aria-pressed={draft.floor === String(floor)} disabled={busy} onClick={() => onChange({ floor: String(floor) })}><span>Floor {floor}</span><small>({floor}01–{floor}04)</small></button>)}
-        <button type="button" disabled aria-describedby="booking-floor4-note"><span>Floor 4</span><small>(401–404)</small></button>
+        {[1, 2, 3, 4].map(floor => <button type="button" key={floor} aria-pressed={draft.floor === String(floor)} disabled={busy || !floors.includes(floor)} onClick={() => onChange({ floor: String(floor) })}><span>Floor {floor}</span><small>({floor}01–{floor}04)</small></button>)}
       </div>
       <div className="booking-search-tools">
         <label className="booking-search"><span className="booking-sr-only">Search rooms, facilities, locations or equipment</span><BookingIcon name="89ed7" /><input type="search" value={draft.search} disabled={busy} placeholder="Search room, equipment..." onChange={event => onChange({ search: event.target.value })} /></label>
@@ -38,7 +37,7 @@ export default function VenueCatalog({ views, total, draft, selectedId, busy, on
         {[['all', 'All statuses'], ['available', 'Available now / free window'], ['occupied', 'In session'], ['reserved', 'Reserved'], ['unavailable', 'Unavailable']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>}
     </div>
-    <div className="booking-catalog-meta"><span role="status">{views.length} {views.length === 1 ? 'venue' : 'venues'} shown{draft.statusFilter !== 'all' && ' · availability filter active'}</span><span id="booking-floor4-note">Floor 4 details unavailable</span></div>
+    <div className="booking-catalog-meta"><span role="status">{views.length} {views.length === 1 ? 'venue' : 'venues'} shown{draft.statusFilter !== 'all' && ' · availability filter active'}</span>{!floors.includes(4) && <span id="booking-floor4-note">Floor 4 details unavailable</span>}</div>
     {!views.length ? <div className="booking-no-results"><h2>No venues found</h2><p>Try another room name, floor, or availability filter.</p><button type="button" disabled={busy} onClick={() => onChange({ search: '', statusFilter: 'all' })}>Clear search &amp; status filter</button></div>
       : draft.floor === 'all' ? <div className="booking-table-scroll" role="region" aria-label="Venue catalog table, scroll for more rooms" tabIndex="0"><table className="booking-table"><caption className="booking-sr-only">Venues for the selected date and shift</caption><thead><tr><th scope="col">Room</th><th scope="col">Facility details</th><th scope="col">Capacity</th><th scope="col">Utilization</th><th scope="col">Status</th></tr></thead><tbody>
         {views.map(view => <tr key={view.room.id} className={selectedId === view.room.id ? 'is-selected' : ''}>

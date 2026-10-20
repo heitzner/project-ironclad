@@ -65,7 +65,7 @@ export default function BookingDatePicker({ dates, date, busy, onChange }) {
       }}>
       <BookingIcon name="acc81" />
       <span className="booking-date-copy"><span id={`${id}-label`}>Pre-booking Date</span><strong id={`${id}-value`}>{formatDate(date, true)}</strong></span>
-      <span className="booking-term">Demo week</span><BookingIcon name="afb2b" />
+      <span className="booking-term">Next 7 days</span><BookingIcon name="afb2b" />
     </button>
     {expanded && <div className="booking-date-menu" id={`${id}-options`} role="listbox" aria-labelledby={`${id}-label`} onKeyDown={navigate}>
       {dates.map((day, index) => <button key={day} ref={element => { optionRefs.current[index] = element }} type="button" role="option" aria-selected={day === date} tabIndex={day === date ? 0 : -1}

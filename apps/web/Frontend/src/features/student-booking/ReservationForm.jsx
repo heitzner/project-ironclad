@@ -18,8 +18,8 @@ export default function ReservationForm({ requester, view, purpose, slots, slotI
     </fieldset>
     {unavailable && <p className="booking-unavailable" id={`${id}-unavailable`}>{explanation}</p>}
     {error && <p className="booking-error" role="alert" id={`${id}-error`}>{error.message}</p>}
-    <div className="booking-approval"><BookingIcon name="0126c" /><p>Requires final approval from the MIS Administrator before the venue reservation is officially locked.</p></div>
-    <button className="booking-primary booking-submit" type="submit" disabled={busy || unavailable} aria-describedby={unavailable ? `${id}-unavailable` : undefined}><BookingIcon name="876e2" />{busy ? 'Sending request…' : 'Lock Venue'}</button>
-    <p className="booking-demo-note" role="status">{busy ? 'Sending your demo request. Please wait.' : 'Demo request only · nothing is saved to the university system.'}</p>
+    <div className="booking-approval"><BookingIcon name="0126c" /><p>{requester.role === 'admin' ? 'Administrator reservations are approved immediately.' : 'Requires final approval from the MIS Administrator before the venue reservation is officially locked.'}</p></div>
+    <button className="booking-primary booking-submit" type="submit" disabled={busy || unavailable} aria-describedby={unavailable ? `${id}-unavailable` : undefined}><BookingIcon name="876e2" />{busy ? 'Sending request…' : requester.role === 'admin' ? 'Book room' : 'Request booking'}</button>
+    <p className="booking-demo-note" role="status">{busy ? 'Sending your request. Please wait.' : 'Track your reservation in your account menu.'}</p>
   </form>
 }

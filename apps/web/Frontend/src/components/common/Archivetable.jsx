@@ -63,7 +63,7 @@ export function ArchiveTable({
       <div role="region" aria-label="Archived events table" tabIndex={0} className="overflow-x-auto rounded-2xl shadow-card bg-white border border-track/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <table className="w-full min-w-[860px] border-collapse text-left">
           <thead>
-            <tr className="bg-dark text-white text-[12px] font-semibold uppercase tracking-[0.8px]">
+            <tr className="bg-dark text-white text-[13px] font-semibold uppercase tracking-[0.8px]">
               <th scope="col" className="px-5 py-3.5">
                 Concluded Date
               </th>
@@ -134,11 +134,11 @@ export function ArchiveTable({
                     key={item.id}
                     className={`${rowBg} transition-colors duration-150 border-b border-track/20 last:border-b-0`}
                   >
-                    <td className="px-5 py-4 align-top">
+                    <td className="px-5 py-3.5 align-top">
                       <div className="flex items-start gap-2">
                         <CalendarCheck className="h-4 w-4 text-dark shrink-0 mt-0.5" aria-hidden="true" />
                         <div>
-                          <p className="text-[14px] font-semibold text-textPrimary leading-tight">
+                          <p className="text-[15px] font-medium text-textPrimary leading-tight">
                             {formatDate(item.concludedDate)}
                           </p>
                           {(item.startTime || item.endTime) && (
@@ -150,9 +150,9 @@ export function ArchiveTable({
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 align-top">
+                    <td className="px-5 py-3.5 align-top">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[15px] font-semibold text-textPrimary leading-tight">
+                        <span className="text-[16px] font-semibold text-textPrimary leading-tight">
                           {item.title}
                         </span>
                         {item.category && (
@@ -172,7 +172,7 @@ export function ArchiveTable({
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 align-top">
+                    <td className="px-5 py-3.5 align-top">
                       <div
                         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold ${
                           isEven ? 'bg-white text-textPrimary' : 'bg-surfaceGray text-textPrimary'
@@ -183,7 +183,7 @@ export function ArchiveTable({
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 align-top">
+                    <td className="px-5 py-3.5 align-top">
                       <div className="flex items-center gap-2 pt-1">
                         <span className="h-2 w-2 rounded-full bg-dark shrink-0" aria-hidden="true" />
                         <span className="text-[13px] font-semibold text-textPrimary">
@@ -192,7 +192,7 @@ export function ArchiveTable({
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 align-top text-right">
+                    <td className="px-5 py-3.5 align-top text-right">
                       <button
                         type="button"
                         onClick={() => download.run({ id: item.id })}

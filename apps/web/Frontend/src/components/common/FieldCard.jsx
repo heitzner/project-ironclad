@@ -13,11 +13,11 @@ export function FieldCard({
   id,
 }) {
   return (
-    <div className="rounded-xl bg-white p-3 shadow-card border border-track/30">
+    <div className="rounded-control bg-white p-2 shadow-card border border-track/30">
       <div className="flex items-center justify-between pb-1.5">
         <label
           htmlFor={id}
-          className="text-[12px] font-medium text-textSecondary"
+          className="text-[10px] font-medium text-textSecondary"
         >
           {label}
         </label>
@@ -32,7 +32,7 @@ export function FieldCard({
         <div
           id={id}
           aria-readonly="true"
-          className="flex h-11 items-center rounded-lg bg-selectBg px-3 text-[16px] sm:text-[18px] font-semibold text-textPrimary truncate"
+          className="flex h-11 items-center rounded-control bg-selectBg px-3 text-[15px] font-semibold text-textPrimary truncate"
         >
           {value || '-'}
         </div>

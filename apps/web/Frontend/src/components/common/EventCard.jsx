@@ -5,6 +5,7 @@ import {
   Image as ImageIcon,
   Map,
   MapPin,
+  Megaphone,
   ShieldCheck,
   Trophy,
 } from 'lucide-react'
@@ -27,21 +28,23 @@ export function EventCard({
   const statusBg = isInstitutional ? 'bg-deep' : 'bg-dark'
 
   const isCommittee = event.organizerType === 'committee'
+  const PlaceholderIcon = event.kind === 'council' ? ShieldCheck : event.kind === 'event' ? Trophy : Megaphone
 
   return (
-    <article className="flex flex-col min-h-[441px] rounded-2xl bg-cardBg shadow-card overflow-hidden">
+    <article className="flex min-h-[441px] flex-1 flex-col rounded-2xl bg-cardBg shadow-card overflow-hidden">
       {/* Media */}
-      <div className="relative h-[208px] w-full bg-surfaceGray">
+      <div className="relative h-[208px] w-full shrink-0 bg-surfaceGray">
         {!imageError && event.imageUrl ? (
           <img
             src={event.imageUrl}
             alt={event.title}
             onError={() => setImageError(true)}
             className="h-full w-full object-cover"
+            style={event.imagePosition ? { objectPosition: event.imagePosition } : undefined}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-textMuted bg-surfaceGray">
-            <ImageIcon className="h-10 w-10 opacity-40" aria-hidden="true" />
+          <div className={`flex h-full w-full items-center justify-center ${event.kind ? 'bg-cardBg text-dark' : 'bg-surfaceGray text-textMuted'}`}>
+            {event.kind ? <PlaceholderIcon className="h-10 w-10" aria-hidden="true" /> : <ImageIcon className="h-10 w-10 opacity-40" aria-hidden="true" />}
           </div>
         )}
 
@@ -119,7 +122,7 @@ export function EventCard({
             </span>
           </div>
 
-          <ProgressBar value={pct} label={`${event.title}: ${registered} of ${capacity} registered`} /></> : <p className="text-xs text-textSecondary">Registration counts not provided.</p>}
+          <ProgressBar value={pct} label={`${event.title}: ${registered} of ${capacity} registered`} /></> : !event.announcement && <p className="text-xs text-textSecondary">{event.kind === 'council' ? 'Council membership opportunity' : 'Campus news & updates'}</p>}
 
           <div className="flex items-center gap-1 pt-1 text-[10px] leading-[14px] text-textSecondary">
             {isCommittee ? (
@@ -141,18 +144,18 @@ export function EventCard({
             className="flex min-h-11 items-center gap-1 rounded-lg bg-soft px-3.5 py-1.5 text-[11px] font-semibold leading-4 tracking-[0.44px] text-textPrimary transition-colors duration-150 hover:bg-soft/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Map className="h-3 w-3 shrink-0" aria-hidden="true" />
-            <span>View Venue Details</span>
+            <span>{event.kind ? 'View details' : 'View Venue Details'}</span>
           </button>
 
-          <button
+          {!event.announcement && <button
             type="button"
             onClick={() => onRegister?.(event)}
-            disabled={isFull}
+            disabled={isFull || event.registrationDisabled}
             className="flex min-h-11 items-center gap-1 rounded-lg bg-dark px-4 py-1.5 text-[11px] font-semibold leading-4 text-white shadow-card transition-colors duration-150 hover:bg-deep disabled:cursor-not-allowed disabled:bg-track disabled:text-textMuted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span>{isFull ? 'Fully Booked' : event.actionLabel || 'Register'}</span>
             {!isFull && <ArrowRight className="h-3 w-3 shrink-0" aria-hidden="true" />}
-          </button>
+          </button>}
         </div>
       </div>
     </article>

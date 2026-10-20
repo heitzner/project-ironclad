@@ -16,12 +16,12 @@ import AdminWorkspace from './pages/admin/AdminWorkspace.jsx'
 import ViewerPage from './pages/public/ViewerPage.jsx'
 import PortalState from './components/common/PortalState.jsx'
 import PageLayout from './components/common/PageLayout.jsx'
-import { frontendPreview } from './components/auth/frontend-preview.js'
+import FrontendSystem from './components/common/FrontendSystem.jsx'
 
 // The standalone frontend uses the requested preview. Supplied integrations own all inputs.
 export default function App(props) {
-  const integration = Object.values(props).some(value => value !== undefined) ? props : frontendPreview
-  return <PortalApp {...integration} />
+  if (!Object.values(props).some(value => value !== undefined)) return <FrontendSystem />
+  return <PortalApp {...props} />
 }
 
 function PortalApp({ session, loadSession, sessionKey, authActions, admin, council, viewer, student }) {

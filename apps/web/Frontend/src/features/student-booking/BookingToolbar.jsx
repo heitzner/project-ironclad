@@ -6,7 +6,7 @@ export default function BookingToolbar({ dates, date, shift, counts, busy, onCha
     <div className="booking-toolbar-inner">
       <div className="booking-heading">
         <div className="booking-breadcrumb">PORTAL <BookingIcon name="9c327" /> <span>BOOKING</span></div>
-        <div className="booking-title-row"><h1 id="booking-title">Room &amp; Laboratory Booking</h1><span className="booking-demo"><i />Demo data</span></div>
+        <div className="booking-title-row"><h1 id="booking-title">Room &amp; Laboratory Booking</h1><span className="booking-demo"><i />Campus venues</span></div>
       </div>
       <div className="booking-quick-controls">
         <BookingDatePicker dates={dates} date={date} busy={busy} onChange={onChange} />

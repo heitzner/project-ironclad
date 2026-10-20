@@ -6,6 +6,8 @@ function SearchBar({
   category = '',
   onCategoryChange,
   categories = [],
+  categoryLabel = 'Filter by category',
+  allCategoriesLabel = 'All Categories',
   searchLabel = 'Search campus news',
   placeholder = 'Search announcements, event campaigns, venue permits, or student organizations...',
   actionLabel = 'Search',
@@ -40,10 +42,10 @@ function SearchBar({
           <select
             value={category}
             onChange={(event) => onCategoryChange?.(event.target.value)}
-            aria-label="Filter by category"
+            aria-label={categoryLabel}
             className="h-full w-full appearance-none rounded-control border border-textMuted bg-selectBg py-2 pl-3 pr-8 text-[11px] font-semibold leading-4 tracking-[0.44px] text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <option value="">All Categories</option>
+            <option value="">{allCategoriesLabel}</option>
             {categories.map((item) => {
               const value = typeof item === 'string' ? item : item.value
               const label = typeof item === 'string' ? item : item.label

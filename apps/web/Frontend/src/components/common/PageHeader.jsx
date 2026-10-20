@@ -33,7 +33,7 @@ function PageHeader({ icon: Icon, title, subtitle, children }) {
         </div>
         {subtitle && <p className="mt-0.5 text-[12px] font-normal leading-[18px] text-textSecondary">{subtitle}</p>}
       </div>
-      {children && <div className="flex shrink-0 items-center gap-1">{children}</div>}
+      {children && <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{children}</div>}
     </header>
   )
 }
