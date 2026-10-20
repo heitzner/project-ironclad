@@ -5,7 +5,8 @@ export function isIsoDate(value) {
 }
 
 export function isTime(value) {
-  return typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+  if (typeof value !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
+  return true;
 }
 
 export function timeToMinutes(value) {
@@ -25,6 +26,14 @@ export function addDays(isoDate, days) {
   return date.toISOString().slice(0, 10);
 }
 
+export function todayIso() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function overlapMinutes(startA, endA, startB, endB) {
   return Math.max(0, Math.min(endA, endB) - Math.max(startA, startB));
 }
@@ -33,35 +42,32 @@ export function durationHours(startTime, endTime) {
   return Math.round(((timeToMinutes(endTime) - timeToMinutes(startTime)) / 60) * 10) / 10;
 }
 
-export function formatTime12Hour(value, includeSeconds = false) {
-  const parts = value.split(':').map(Number);
-  const [hours, minutes, seconds = 0] = parts;
+export function formatTime12Hour(value) {
+  const [hours, minutes] = value.split(':').map(Number);
   const suffix = hours >= 12 ? 'PM' : 'AM';
   const displayHour = hours % 12 || 12;
-  const base = `${String(displayHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-  return `${includeSeconds ? `${base}:${String(seconds).padStart(2, '0')}` : base} ${suffix}`;
-}
-
-function zonedParts(timeZone, instant = new Date()) {
-  return Object.fromEntries(new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(instant).map((part) => [part.type, part.value]));
+  return `${String(displayHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`;
 }
 
 export function currentTimeInZone(timeZone, instant = new Date()) {
-  const values = zonedParts(timeZone, instant);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(instant);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.hour}:${values.minute}`;
 }
 
 export function currentDateInZone(timeZone, instant = new Date()) {
-  const values = zonedParts(timeZone, instant);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
 

@@ -1,15 +1,15 @@
 import BookingIcon from './BookingIcon'
 import BookingDatePicker from './BookingDatePicker'
 
-export default function BookingToolbar({ dates, date, shift, counts, busy, onChange }) {
+export default function BookingToolbar({ dates, date, shift, counts, datasetLabel, busy, onChange }) {
   return <header className="booking-toolbar">
     <div className="booking-toolbar-inner">
       <div className="booking-heading">
         <div className="booking-breadcrumb">PORTAL <BookingIcon name="9c327" /> <span>BOOKING</span></div>
-        <div className="booking-title-row"><h1 id="booking-title">Room &amp; Laboratory Booking</h1><span className="booking-demo"><i />Demo data</span></div>
+        <div className="booking-title-row"><h1 id="booking-title">Room &amp; Laboratory Booking</h1><span className="booking-demo"><i />{datasetLabel}</span></div>
       </div>
       <div className="booking-quick-controls">
-        <BookingDatePicker dates={dates} date={date} busy={busy} onChange={onChange} />
+        <BookingDatePicker dates={dates} date={date} datasetLabel={datasetLabel} busy={busy} onChange={onChange} />
         <div className="booking-segment" role="group" aria-label="Booking shift">
           {[['all', 'All Day'], ['morning', 'Morning'], ['evening', 'Evening']].map(([value, label]) => <button key={value} type="button" aria-pressed={shift === value} disabled={busy} onClick={() => onChange({ shift: value })}>{label}</button>)}
         </div>

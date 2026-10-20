@@ -4,257 +4,401 @@ import { createApp } from '../src/app.js';
 import { createDemoData } from '../src/data/demoData.js';
 import { InMemoryBookingRepository } from '../src/repositories/inMemoryBookingRepository.js';
 
-function settings() {
-  return {
-    timeZone: 'Asia/Manila',
-    approverRole: 'MIS Administrator',
-    purposeMaxLength: 200,
-    minSlotMinutes: 30,
-    defaultStudentId: '2022-10892',
-    demoWeekStart: '2026-10-19',
-    calendar: { term_label: 'Term 2', week_label: 'W6' },
-    operationalWindow: { start: '07:00', end: '21:30' },
-    cors: { allowedOrigins: ['http://localhost:5173', 'http://127.0.0.1:5173'] },
-    periods: {
-      morning: [{ start: '07:00', end: '12:00' }],
-      evening: [{ start: '13:00', end: '18:00' }],
-      all_day: [{ start: '07:00', end: '12:00' }, { start: '13:00', end: '18:00' }],
-    },
-    admin: {
-      connectionState: 'connected', sessionHeader: 'x-ironclad-test-session', testSessionId: 'admin-demo', nonAdminSessionId: 'student-demo', requestLimit: 20, requestLimitMax: 100, decisionReasonMaxLength: 500,
-    },
-    council: {
-      connectionState: 'connected', sessionHeader: 'x-ironclad-test-session', testSessionId: 'council-demo', nonCouncilSessionIds: ['admin-demo', 'student-demo'], requestLimit: 20, requestLimitMax: 100, endorsementMaxLength: 2000, vacantMaxPercent: 25, allocatedMinPercent: 70, examPrepEntryType: 'exam_prep', clockIso: '2026-10-19T06:15:00.000Z',
-    },
-  };
-}
-
-const councilHeaders = { 'x-ironclad-test-session': 'council-demo' };
-const adminHeaders = { 'x-ironclad-test-session': 'admin-demo' };
+const settings = Object.freeze({
+  timeZone: 'Asia/Manila',
+  approverRole: 'MIS Administrator',
+  purposeMaxLength: 200,
+  minSlotMinutes: 30,
+  defaultStudentId: '2022-10892',
+  demoWeekStart: '2026-10-19',
+  demoNow: '2026-10-20T14:15:00+08:00',
+  calendar: Object.freeze({ term_label: 'Term 2', week_label: 'W6' }),
+  operationalWindow: Object.freeze({ start: '07:00', end: '21:30' }),
+  admin: Object.freeze({
+    connectionState: 'connected',
+    sessionHeader: 'x-ironclad-test-session',
+    testSessionId: 'admin-demo',
+    nonAdminSessionId: 'student-demo',
+    requestLimit: 20,
+    requestLimitMax: 100,
+    decisionReasonMaxLength: 500,
+  }),
+  periods: Object.freeze({
+    morning: Object.freeze([{ start: '07:00', end: '12:00' }]),
+    evening: Object.freeze([{ start: '13:00', end: '18:00' }]),
+    all_day: Object.freeze([
+      { start: '07:00', end: '12:00' },
+      { start: '13:00', end: '18:00' },
+    ]),
+  }),
+});
 
 async function withApi(run) {
-  const activeSettings = settings();
-  const repository = new InMemoryBookingRepository(createDemoData(activeSettings.demoWeekStart));
-  const server = createApp({ repository, settings: activeSettings }).listen(0, '127.0.0.1');
+  const repository = new InMemoryBookingRepository(createDemoData(settings.demoWeekStart));
+  const server = createApp({ repository, settings }).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   const { port } = server.address();
-  try { await run(`http://127.0.0.1:${port}`, repository); }
-  finally { await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))); }
+  try {
+    await run(`http://127.0.0.1:${port}`);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
 }
 
-async function json(response) { return { status: response.status, body: await response.json() }; }
-const councilGet = (url) => fetch(url, { headers: councilHeaders });
-
-function councilPost(url, body) {
-  return fetch(url, { method: 'POST', headers: { ...councilHeaders, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+async function json(response) {
+  const body = await response.json();
+  return { status: response.status, body };
 }
 
-test('student catalog and admin request data are reconstructed on the shared store', async () => {
-  await withApi(async (baseUrl) => {
-    const venues = await json(await fetch(`${baseUrl}/venues?date=2026-10-19`));
-    assert.equal(venues.status, 200);
-    assert.equal(venues.body.meta.total_count, 12);
-    assert.equal(venues.body.meta.floor_counts.floor_4, 4);
-
-    const requests = await json(await fetch(`${baseUrl}/admin/booking-requests`, { headers: adminHeaders }));
-    assert.equal(requests.body.meta.total_count, 6);
-    assert.deepEqual(requests.body.meta.decision_counts, { pending: 2, approved: 2, rejected: 2 });
+function lockRequest(baseUrl, overrides = {}) {
+  return fetch(`${baseUrl}/reservations/lock`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      room_code: 'Room 101',
+      date: '2026-10-19',
+      start_time: '11:00',
+      end_time: '12:00',
+      purpose: 'Ethics with Peace Studies Filming',
+      student_id: '2022-10892',
+      ...overrides,
+    }),
   });
-});
+}
 
-test('council endpoints enforce missing, invalid, and non-COUNCIL sessions', async () => {
+test('GET /venues defaults All Venues to 12 usable rooms and exposes Floor 4 counts', async () => {
   await withApi(async (baseUrl) => {
-    assert.equal((await json(await fetch(`${baseUrl}/council/session`))).status, 401);
-    assert.equal((await json(await fetch(`${baseUrl}/council/session`, { headers: adminHeaders }))).status, 403);
-    const invalid = await json(await fetch(`${baseUrl}/council/venues`, { headers: { 'x-ironclad-test-session': 'unknown' } }));
-    assert.equal(invalid.status, 401);
-  });
-});
-
-test('council session returns profile and the overridable demo clock', async () => {
-  await withApi(async (baseUrl) => {
-    const result = await json(await councilGet(`${baseUrl}/council/session`));
-    assert.equal(result.body.data.full_name, 'Ashley Gabrielle C. Alcantara');
-    assert.equal(result.body.data.program_section, 'BSCS 3A');
-    assert.equal(result.body.data.role, 'COUNCIL');
-    assert.equal(result.body.data.server_time, '2026-10-19T06:15:00.000Z');
-    assert.match(result.body.data.display_time, /02:15:00 PM/);
-    assert.match(result.body.data.display_date, /Oct 19, 2026/);
-  });
-});
-
-test('council venue list returns all 16, floor counts, search, and stateless selection', async () => {
-  await withApi(async (baseUrl) => {
-    const all = await json(await councilGet(`${baseUrl}/council/venues`));
-    assert.equal(all.body.meta.total_count, 16);
-    assert.deepEqual(all.body.meta.floor_counts, { all_venues: 16, floor_1: 4, floor_2: 4, floor_3: 4, floor_4: 4 });
-
-    const selected = await json(await councilGet(`${baseUrl}/council/venues?floor=3&q=GPU&selected_room_code=Room%20302`));
-    assert.equal(selected.body.data.length, 1);
-    assert.equal(selected.body.data[0].room_code, 'Room 302');
-    assert.equal(selected.body.data[0].is_selected, true);
-
-    const nextRequest = await json(await councilGet(`${baseUrl}/council/venues?floor=3&q=GPU`));
-    assert.equal(nextRequest.body.data[0].is_selected, false);
-  });
-});
-
-test('council status and utilization labels use current entries and configured thresholds', async () => {
-  await withApi(async (baseUrl) => {
-    const result = await json(await councilGet(`${baseUrl}/council/venues?date=2026-10-19`));
-    const byCode = Object.fromEntries(result.body.data.map((venue) => [venue.room_code, venue]));
-    assert.equal(byCode['Room 101'].status, 'in_session');
-    assert.equal(byCode['Room 101'].status_label, 'In Session');
-    assert.equal(byCode['Room 101'].utilization_label, 'In Session');
-    assert.equal(byCode['Room 201'].utilization_label, 'Allocated');
-    assert.equal(byCode['Room 301'].utilization_label, 'Vacant');
-    assert.equal(byCode['Room 401'].utilization_label, 'Empty');
-    assert.equal(byCode['Room 203'].status, 'unavailable');
-    assert.equal(byCode['Room 203'].status_label, 'Locked by Dean');
-    assert.equal(byCode['Room 203'].utilization_label, 'Exam Prep');
-
-    const reserved = await json(await councilGet(`${baseUrl}/council/venues?date=2026-10-20&selected_room_code=Room%20201`));
-    const room201 = reserved.body.data.find((venue) => venue.room_code === 'Room 201');
-    assert.equal(room201.status, 'in_session');
-  });
-});
-
-test('venue sidebar combines live schedule, vacancy, and pending venue requests', async () => {
-  await withApi(async (baseUrl) => {
-    const result = await json(await councilGet(`${baseUrl}/council/venues/Room%20201/sidebar?date=2026-10-19&at_time=14:15`));
+    const result = await json(await fetch(
+      `${baseUrl}/venues?date=2026-10-19&period=all_day`,
+    ));
     assert.equal(result.status, 200);
-    assert.equal(result.body.data.venue.name, 'Computer Science Lab 1');
-    assert.equal(result.body.data.current_session.title, 'CC 116 Advanced Web Systems - BSCS 3A');
+    assert.equal(result.body.meta.total_count, 12);
+    assert.deepEqual(result.body.meta.floor_counts, {
+      all_venues: 12,
+      floor_1: 4,
+      floor_2: 4,
+      floor_3: 4,
+      floor_4: 4,
+    });
+    assert.equal(result.body.meta.floor_unavailable_notice, true);
+    assert.ok(result.body.data.every((venue) => venue.floor <= 3));
+
+    const floorFour = await json(await fetch(
+      `${baseUrl}/venues?date=2026-10-19&floor=4`,
+    ));
+    assert.equal(floorFour.body.meta.total_count, 4);
+    assert.ok(floorFour.body.data.every(
+      (venue) => venue.status === 'unavailable' && !venue.is_details_available,
+    ));
+  });
+});
+
+test('venue filtering searches equipment case-insensitively and keeps filtered counts', async () => {
+  await withApi(async (baseUrl) => {
+    const result = await json(await fetch(
+      `${baseUrl}/venues?date=2026-10-19&period=all_day&floor=3&q=GPU`,
+    ));
+    assert.equal(result.body.meta.total_count, 1);
+    assert.equal(result.body.data[0].room_code, 'Room 302');
+    assert.deepEqual(result.body.meta.floor_counts, {
+      all_venues: 1,
+      floor_1: 0,
+      floor_2: 0,
+      floor_3: 1,
+      floor_4: 0,
+    });
+  });
+});
+
+test('utilization is booked minutes divided by selected period minutes', async () => {
+  await withApi(async (baseUrl) => {
+    const room101 = await json(await fetch(
+      `${baseUrl}/venues/Room%20101?date=2026-10-19&period=all_day`,
+    ));
+    const morning101 = await json(await fetch(
+      `${baseUrl}/venues/Room%20101?date=2026-10-19&period=morning`,
+    ));
+    const room102 = await json(await fetch(
+      `${baseUrl}/venues/Room%20102?date=2026-10-19&period=all_day`,
+    ));
+    assert.equal(room101.body.data.utilization_percent, 67);
+    assert.equal(morning101.body.data.utilization_percent, 80);
+    assert.equal(room102.body.data.utilization_percent, 41);
+  });
+});
+
+test('status derivation and summary counts use the same active filters', async () => {
+  await withApi(async (baseUrl) => {
+    const all = await json(await fetch(`${baseUrl}/venues?date=2026-10-19`));
+    assert.deepEqual(all.body.meta.summary, {
+      available: 11,
+      occupied: 0,
+      unavailable: 1,
+    });
+    const room203 = all.body.data.find((venue) => venue.room_code === 'Room 203');
+    assert.equal(room203.status, 'unavailable');
+    assert.equal(room203.status_label, 'Locked by Dean');
+    assert.equal(room203.utilization_percent, 0);
+
+    const lockedSearch = await json(await fetch(
+      `${baseUrl}/venues?date=2026-10-19&q=network%20systems`,
+    ));
+    assert.deepEqual(lockedSearch.body.meta.summary, {
+      available: 0,
+      occupied: 0,
+      unavailable: 1,
+    });
+  });
+});
+
+test('venue details return rich period schedule data for the student UI', async () => {
+  await withApi(async (baseUrl) => {
+    const details = await json(await fetch(
+      `${baseUrl}/venues/Room%20101?date=2026-10-19&period=morning`,
+    ));
+    assert.equal(details.body.data.timetable.length, 1);
+    assert.equal(details.body.data.timetable[0].venue_id, 'Room 101');
+    assert.equal(details.body.data.timetable[0].entry_type, 'class');
+    assert.deepEqual(details.body.data.free_windows, [
+      { start_time: '11:00', end_time: '12:00', duration_hours: 1 },
+    ]);
+    assert.deepEqual(details.body.meta.period_windows, [{ start: '07:00', end: '12:00' }]);
+    assert.equal(details.body.meta.current_time, '14:15');
+    assert.equal((await json(await fetch(
+      `${baseUrl}/venues/Room%20999?date=2026-10-19`,
+    ))).status, 404);
+  });
+});
+
+test('occupancy derives the current Room 201 session and ordered upcoming schedule', async () => {
+  await withApi(async (baseUrl) => {
+    const result = await json(await fetch(
+      `${baseUrl}/venues/Room%20201/occupancy?date=2026-10-19&at_time=14:15`,
+    ));
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.data.venue, {
+      room_code: 'Room 201',
+      name: 'Computer Science Lab 1',
+    });
+    assert.equal(
+      result.body.data.current_session.title,
+      'CC 116 Advanced Web Systems - BSCS 3A',
+    );
     assert.equal(result.body.data.current_session.instructor_name, 'Prof. M. Raby');
-    assert.deepEqual(result.body.data.upcoming_schedule.map((item) => item.state_label), ['Free Window', 'Class', 'Reserved']);
+    assert.equal(result.body.data.current_session.status_label, 'In Session • Until 03:00 PM');
+    assert.deepEqual(
+      result.body.data.upcoming_schedule.map((entry) => entry.state_label),
+      ['Free Window', 'Class', 'Reserved'],
+    );
+    assert.equal(result.body.data.term_label, 'Term 2');
+    assert.equal(result.body.data.week_label, 'W6');
+  });
+});
+
+test('occupancy rejects unavailable venues', async () => {
+  await withApi(async (baseUrl) => {
+    assert.equal((await json(await fetch(
+      `${baseUrl}/venues/Room%20203/occupancy?date=2026-10-19&at_time=14:15`,
+    ))).status, 422);
+    assert.equal((await json(await fetch(
+      `${baseUrl}/venues/Room%20401/occupancy?date=2026-10-19&at_time=14:15`,
+    ))).status, 422);
+  });
+});
+
+test('vacancy computes free windows, total hours, and requested-start suggestion', async () => {
+  await withApi(async (baseUrl) => {
+    const result = await json(await fetch(
+      `${baseUrl}/venues/Room%20201/vacancy?date=2026-10-19&requested_start=15:30`,
+    ));
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.data.free_windows, [
+      { start_time: '15:00', end_time: '16:30', duration_hours: 1.5 },
+    ]);
     assert.equal(result.body.data.full_vacancy_hours, 1.5);
-    assert.equal(result.body.data.pending_requests_for_venue[0].reservation_id, 'RES-DEMO-0001');
-
-    const floorFour = await json(await councilGet(`${baseUrl}/council/venues/Room%20401/sidebar`));
-    assert.equal(floorFour.status, 422);
+    assert.deepEqual(result.body.data.suggested_duration, {
+      start_time: '15:30',
+      end_time: '16:30',
+      duration_hours: 1,
+    });
   });
 });
 
-test('council booking requests filter, paginate, count, and echo selection', async () => {
+test('reservation config returns the placeholder student and approval rules', async () => {
   await withApi(async (baseUrl) => {
-    const all = await json(await councilGet(`${baseUrl}/council/booking-requests`));
-    assert.equal(all.body.meta.total_count, 6);
-    assert.deepEqual(all.body.meta.decision_counts, { pending: 2, approved: 2, rejected: 2 });
-
-    const filtered = await json(await councilGet(`${baseUrl}/council/booking-requests?q=Bianca&decision=approved&selected_reservation_id=RES-DEMO-0005&limit=1`));
-    assert.equal(filtered.body.meta.total_count, 1);
-    assert.equal(filtered.body.data[0].reservation_id, 'RES-DEMO-0005');
-    assert.equal(filtered.body.data[0].is_selected, true);
-
-    const room = await json(await councilGet(`${baseUrl}/council/booking-requests?room_code=Room%20104`));
-    assert.equal(room.body.data[0].reservation_id, 'RES-DEMO-0004');
+    const result = await json(await fetch(
+      `${baseUrl}/reservations/config?student_id=2022-10892`,
+    ));
+    assert.equal(result.status, 200);
+    assert.equal(result.body.data.requester.full_name, 'Ashley Gabrielle C. Alcantara');
+    assert.equal(result.body.data.requester.program_section, 'BSCS 3A');
+    assert.equal(result.body.data.requester.studentId, '2022-10892');
+    assert.equal(result.body.data.requester.name, 'Ashley Gabrielle C. Alcantara');
+    assert.match(result.body.data.approval_notice, /MIS Administrator/);
+    assert.equal(result.body.data.purpose_max_length, 200);
+    assert.equal(result.body.data.minimum_slot_minutes, 30);
   });
 });
 
-test('booking request sidebar returns request, venue sidebar, and live conflict result', async () => {
+test('a lock request creates a pending hold that affects utilization and conflicts', async () => {
   await withApi(async (baseUrl) => {
-    const result = await json(await councilGet(`${baseUrl}/council/booking-requests/RES-DEMO-0001/sidebar?at_time=15:30`));
-    assert.equal(result.body.data.request.is_selected, true);
-    assert.equal(result.body.data.request.requester.student_id, '2022-10892');
-    assert.equal(result.body.data.venue_sidebar.venue.room_code, 'Room 201');
-    assert.match(result.body.data.venue_sidebar.current_session.status_label, /Reserved/);
-    assert.equal(result.body.data.conflict_check, true);
-    assert.equal(result.body.data.endorsement, null);
-    assert.equal((await json(await councilGet(`${baseUrl}/council/booking-requests/UNKNOWN/sidebar`))).status, 404);
-  });
-});
-
-test('active notice and guidelines endpoints expose seeded read-only content', async () => {
-  await withApi(async (baseUrl) => {
-    const notices = await json(await councilGet(`${baseUrl}/council/notices`));
-    assert.equal(notices.body.data.length, 1);
-    assert.equal(notices.body.data[0].title, 'CSD Fair Badminton Tryout');
-    assert.equal(notices.body.data[0].guidelines_available, true);
-    const guidelines = await json(await councilGet(`${baseUrl}/council/notices/NOTICE-001/guidelines`));
-    assert.match(guidelines.body.data.guidelines, /Available Now/);
-    assert.equal((await json(await councilGet(`${baseUrl}/council/notices/UNKNOWN/guidelines`))).status, 404);
-  });
-});
-
-test('council can configure and create a pending reservation shared with student and admin views', async () => {
-  await withApi(async (baseUrl) => {
-    const config = await json(await councilGet(`${baseUrl}/council/reservations/config`));
-    assert.equal(config.body.data.requester.student_id, '2022-10892');
-    const created = await json(await councilPost(`${baseUrl}/council/reservations`, {
-      room_code: 'Room 101', date: '2026-10-19', start_time: '11:00', end_time: '12:00', purpose: 'Council documentation filming',
-    }));
+    const created = await json(await lockRequest(baseUrl));
     assert.equal(created.status, 201);
     assert.equal(created.body.data.status, 'pending_approval');
-    assert.equal(created.body.data.requested_by, '2022-10892');
+    assert.equal(created.body.data.approver_role, 'MIS Administrator');
+    assert.equal(created.body.data.duration_hours, 1);
+    assert.equal(created.body.data.purpose, 'Ethics with Peace Studies Filming');
 
-    const studentVenue = await json(await fetch(`${baseUrl}/venues/Room%20101?date=2026-10-19`));
-    assert.equal(studentVenue.body.data.utilization_percent, 77);
-    const adminRequests = await json(await fetch(`${baseUrl}/admin/booking-requests?q=Council%20documentation`, { headers: adminHeaders }));
-    assert.equal(adminRequests.body.meta.total_count, 1);
+    const details = await json(await fetch(
+      `${baseUrl}/venues/Room%20101?date=2026-10-19&period=all_day`,
+    ));
+    assert.equal(details.body.data.utilization_percent, 77);
 
-    const conflict = await json(await councilPost(`${baseUrl}/council/reservations`, {
-      room_code: 'Room 101', date: '2026-10-19', start_time: '11:30', end_time: '12:30', purpose: 'Overlapping request',
+    const conflict = await json(await lockRequest(baseUrl, {
+      start_time: '11:30',
+      end_time: '12:30',
     }));
     assert.equal(conflict.status, 409);
+    assert.equal(conflict.body.error.code, 'SLOT_CONFLICT');
   });
 });
 
-test('council creates one endorsement letter without changing the decision', async () => {
-  await withApi(async (baseUrl, repository) => {
-    const endorsed = await json(await councilPost(`${baseUrl}/council/booking-requests/RES-DEMO-0001/endorsements`, {
-      message: 'The council endorses this request for departmental activity.',
+test('pending holds update venue status and filtered summary counts', async () => {
+  await withApi(async (baseUrl) => {
+    const morningHold = await json(await lockRequest(baseUrl, {
+      room_code: 'Room 204',
+      start_time: '07:00',
+      end_time: '12:00',
+      purpose: 'Morning organization program',
     }));
-    assert.equal(endorsed.status, 201);
-    assert.equal(endorsed.body.data.reservation_id, 'RES-DEMO-0001');
-    assert.equal(endorsed.body.data.endorsed_by.full_name, 'Ashley Gabrielle C. Alcantara');
-    assert.equal(repository.findReservation('RES-DEMO-0001').decision, 'pending');
+    const eveningHold = await json(await lockRequest(baseUrl, {
+      room_code: 'Room 204',
+      start_time: '15:00',
+      end_time: '18:00',
+      purpose: 'Evening organization program',
+    }));
+    assert.equal(morningHold.status, 201);
+    assert.equal(eveningHold.status, 201);
 
-    const sidebar = await json(await councilGet(`${baseUrl}/council/booking-requests/RES-DEMO-0001/sidebar`));
-    assert.equal(sidebar.body.data.endorsement.endorsement_id, endorsed.body.data.endorsement_id);
-    const duplicate = await json(await councilPost(`${baseUrl}/council/booking-requests/RES-DEMO-0001/endorsements`, { message: 'Second letter' }));
-    assert.equal(duplicate.status, 409);
-  });
-});
-
-test('council has no approval or rejection write endpoints', async () => {
-  await withApi(async (baseUrl) => {
-    const approve = await json(await councilPost(`${baseUrl}/council/booking-requests/RES-DEMO-0001/approve`, {}));
-    const reject = await json(await councilPost(`${baseUrl}/council/booking-requests/RES-DEMO-0001/reject`, {}));
-    assert.equal(approve.status, 404);
-    assert.equal(reject.status, 404);
-  });
-});
-
-test('admin approval and rejection are immediately reflected in council endpoints', async () => {
-  await withApi(async (baseUrl) => {
-    const approve = await json(await fetch(`${baseUrl}/admin/booking-requests/RES-DEMO-0001/approve`, { method: 'POST', headers: adminHeaders }));
-    assert.equal(approve.status, 200);
-    const approvedSidebar = await json(await councilGet(`${baseUrl}/council/booking-requests/RES-DEMO-0001/sidebar?at_time=15:30`));
-    assert.equal(approvedSidebar.body.data.request.decision, 'approved');
-    assert.match(approvedSidebar.body.data.venue_sidebar.current_session.status_label, /Locked/);
-
-    const reject = await json(await fetch(`${baseUrl}/admin/booking-requests/RES-DEMO-0004/reject`, { method: 'POST', headers: adminHeaders }));
-    assert.equal(reject.status, 200);
-    const rejected = await json(await councilGet(`${baseUrl}/council/booking-requests?room_code=Room%20104`));
-    assert.equal(rejected.body.data[0].decision, 'rejected');
-    const studentVenue = await json(await fetch(`${baseUrl}/venues/Room%20104?date=2026-10-23`));
-    assert.equal(studentVenue.body.data.utilization_percent, 41);
-  });
-});
-
-test('browser clients can call the booking API from an allowed frontend origin', async () => {
-  await withApi(async (baseUrl) => {
-    const preflight = await fetch(`${baseUrl}/reservations/lock`, {
-      method: 'OPTIONS',
-      headers: {
-        Origin: 'http://localhost:5173',
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'content-type',
-      },
+    const floorTwo = await json(await fetch(
+      `${baseUrl}/venues?date=2026-10-19&period=all_day&floor=2`,
+    ));
+    const room204 = floorTwo.body.data.find((venue) => venue.room_code === 'Room 204');
+    assert.equal(room204.utilization_percent, 100);
+    assert.equal(room204.status, 'occupied');
+    assert.deepEqual(floorTwo.body.meta.summary, {
+      available: 2,
+      occupied: 1,
+      unavailable: 1,
     });
-    assert.equal(preflight.status, 204);
-    assert.equal(preflight.headers.get('access-control-allow-origin'), 'http://localhost:5173');
-    assert.match(preflight.headers.get('access-control-allow-methods'), /POST/);
-    assert.match(preflight.headers.get('access-control-allow-headers'), /Content-Type/i);
+  });
+});
+
+test('lock validation rejects overlaps, unavailable rooms, bad increments, and non-free ranges', async () => {
+  await withApi(async (baseUrl) => {
+    assert.equal((await json(await lockRequest(baseUrl, {
+      start_time: '10:30',
+      end_time: '11:30',
+    }))).status, 409);
+    assert.equal((await json(await lockRequest(baseUrl, {
+      room_code: 'Room 203',
+    }))).status, 422);
+    assert.equal((await json(await lockRequest(baseUrl, {
+      room_code: 'Room 401',
+    }))).status, 422);
+
+    const increment = await json(await lockRequest(baseUrl, {
+      start_time: '11:15',
+      end_time: '11:45',
+    }));
+    assert.equal(increment.status, 400);
+    assert.equal(increment.body.error.code, 'INVALID_SLOT_INCREMENT');
+
+    const outside = await json(await lockRequest(baseUrl, {
+      start_time: '06:30',
+      end_time: '07:00',
+    }));
+    assert.equal(outside.status, 422);
+    assert.equal(outside.body.error.code, 'NOT_WITHIN_FREE_WINDOW');
+
+    const emptyPurpose = await json(await lockRequest(baseUrl, { purpose: '   ' }));
+    assert.equal(emptyPurpose.status, 400);
+  });
+});
+
+test('approve converts a pending hold to a locked occupancy slot', async () => {
+  await withApi(async (baseUrl) => {
+    const created = await json(await lockRequest(baseUrl));
+    const reservationId = created.body.data.reservation_id;
+    const approved = await json(await fetch(
+      `${baseUrl}/reservations/${reservationId}/approve`,
+      { method: 'POST', headers: { 'x-ironclad-test-session': 'admin-demo' } },
+    ));
+    assert.equal(approved.status, 200);
+    assert.equal(approved.body.data.status, 'approved');
+
+    const occupancy = await json(await fetch(
+      `${baseUrl}/venues/Room%20101/occupancy?date=2026-10-19&at_time=11:30`,
+    ));
+    assert.equal(occupancy.body.data.current_session.entry_type, 'reserved');
+    assert.equal(occupancy.body.data.current_session.status_label, 'Locked • Until 12:00 PM');
+
+    const repeated = await json(await fetch(
+      `${baseUrl}/reservations/${reservationId}/approve`,
+      { method: 'POST', headers: { 'x-ironclad-test-session': 'admin-demo' } },
+    ));
+    assert.equal(repeated.status, 409);
+  });
+});
+
+test('reservation durations are rounded to one decimal place', async () => {
+  await withApi(async (baseUrl) => {
+    const created = await json(await lockRequest(baseUrl, {
+      room_code: 'Room 201',
+      start_time: '15:00',
+      end_time: '16:30',
+    }));
+    assert.equal(created.status, 201);
+    assert.equal(created.body.data.duration_hours, 1.5);
+  });
+});
+
+test('reject releases a pending hold and transitions are validated', async () => {
+  await withApi(async (baseUrl) => {
+    const created = await json(await lockRequest(baseUrl));
+    const reservationId = created.body.data.reservation_id;
+    const rejected = await json(await fetch(
+      `${baseUrl}/reservations/${reservationId}/reject`,
+      { method: 'POST', headers: { 'x-ironclad-test-session': 'admin-demo' } },
+    ));
+    assert.equal(rejected.body.data.status, 'rejected');
+
+    const retry = await json(await lockRequest(baseUrl));
+    assert.equal(retry.status, 201);
+    assert.equal((await json(await fetch(
+      `${baseUrl}/reservations/RES-9999/reject`,
+      { method: 'POST', headers: { 'x-ironclad-test-session': 'admin-demo' } },
+    ))).status, 404);
+  });
+});
+
+test('booking setup exposes selectable Demo week dates, notices, and a default date', async () => {
+  await withApi(async (baseUrl) => {
+    const result = await json(await fetch(`${baseUrl}/dates/options`));
+    assert.deepEqual(
+      result.body.data.map((option) => option.date),
+      ['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'],
+    );
+    assert.ok(result.body.data.every((option) => option.dataset_label === 'Demo week'));
+    assert.equal(result.body.meta.default_date, '2026-10-20');
+
+    const notices = await json(await fetch(`${baseUrl}/booking/notices`));
+    assert.equal(notices.status, 200);
+    assert.equal(notices.body.data[0].notice_id, 'NOTICE-001');
+
+    const health = await json(await fetch(`${baseUrl}/health`));
+    assert.deepEqual(health.body, { status: 'ok', service: 'ironclad-booking' });
   });
 });

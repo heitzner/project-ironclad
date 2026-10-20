@@ -13,13 +13,11 @@ export function errorMiddleware(error, _request, response, _next) {
       error: { code: 'INVALID_JSON', message: 'Request body must contain valid JSON' },
     });
   }
-  const known = error instanceof HttpError;
-  const payload = {
-    error: {
-      code: known ? error.code : 'INTERNAL_SERVER_ERROR',
-      message: known ? error.message : 'An unexpected error occurred',
-    },
-  };
-  if (known && error.details) payload.error.details = error.details;
-  return response.status(known ? error.status : 500).json(payload);
+
+  const status = error instanceof HttpError ? error.status : 500;
+  const code = error instanceof HttpError ? error.code : 'INTERNAL_SERVER_ERROR';
+  const message = error instanceof HttpError ? error.message : 'An unexpected error occurred';
+  const payload = { error: { code, message } };
+  if (error instanceof HttpError && error.details) payload.error.details = error.details;
+  return response.status(status).json(payload);
 }

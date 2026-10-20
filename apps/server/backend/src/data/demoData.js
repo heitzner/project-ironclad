@@ -24,26 +24,53 @@ const schedulesByRoom = {
     ['07:00', '11:00', 'CS General Lecture - BSCS 2A', 'class', null, 'occupied'],
     ['13:00', '15:40', 'Department Lecture Series', 'class', 'Prof. A. Santos', 'occupied'],
   ],
-  'Room 102': [['07:00', '11:05', 'Electronics Laboratory - BSIT 2A', 'lab_activity', 'Engr. L. Cruz', 'occupied']],
-  'Room 103': [['13:00', '17:05', 'Digital Media Production', 'lab_activity', 'Prof. C. Reyes', 'occupied']],
-  'Room 104': [['07:00', '11:05', 'Faculty Development Seminar', 'class', 'Dr. P. Lim', 'occupied']],
+  'Room 102': [
+    ['07:00', '11:05', 'Electronics Laboratory - BSIT 2A', 'lab_activity', 'Engr. L. Cruz', 'occupied'],
+  ],
+  'Room 103': [
+    ['13:00', '17:05', 'Digital Media Production', 'lab_activity', 'Prof. C. Reyes', 'occupied'],
+  ],
+  'Room 104': [
+    ['07:00', '11:05', 'Faculty Development Seminar', 'class', 'Dr. P. Lim', 'occupied'],
+  ],
   'Room 201': [
     ['07:00', '15:00', 'CC 116 Advanced Web Systems - BSCS 3A', 'lab_activity', 'Prof. M. Raby', 'occupied'],
     ['15:00', '16:30', 'Vacant / Reserved Prep', 'vacant', null, 'free_window'],
     ['16:30', '19:00', 'CSP 111 Algorithm & Complexity - BSCS 3B', 'class', null, 'occupied'],
     ['19:00', '21:30', 'Open Lab / CS Guild', 'open_lab', null, 'reserved'],
   ],
-  'Room 202': [['07:00', '10:20', 'Application Development Laboratory', 'lab_activity', 'Prof. J. Tan', 'occupied']],
-  'Room 203': [['07:00', '21:30', 'Locked by Dean', 'exam_prep', null, 'locked']],
-  'Room 204': [['13:00', '15:00', 'Computer Hardware Servicing', 'lab_activity', 'Prof. E. Diaz', 'occupied']],
-  'Room 301': [['07:30', '09:00', 'Undergraduate Research Consultation', 'class', 'Dr. N. Yu', 'occupied']],
-  'Room 302': [['14:00', '17:00', 'Machine Learning Workshop', 'lab_activity', 'Prof. R. Go', 'occupied']],
-  'Room 303': [['10:00', '12:00', 'Security Operations Exercise', 'lab_activity', 'Prof. S. Ong', 'occupied']],
-  'Room 304': [['13:00', '14:30', 'Capstone Project Consultation', 'class', 'Prof. V. Lee', 'occupied']],
+  'Room 202': [
+    ['07:00', '10:20', 'Application Development Laboratory', 'lab_activity', 'Prof. J. Tan', 'occupied'],
+  ],
+  'Room 203': [
+    ['07:00', '21:30', 'Locked by Dean', 'exam_prep', null, 'locked'],
+  ],
+  'Room 204': [
+    ['13:00', '15:00', 'Computer Hardware Servicing', 'lab_activity', 'Prof. E. Diaz', 'occupied'],
+  ],
+  'Room 301': [
+    ['07:30', '09:00', 'Undergraduate Research Consultation', 'class', 'Dr. N. Yu', 'occupied'],
+  ],
+  'Room 302': [
+    ['14:00', '17:00', 'Machine Learning Workshop', 'lab_activity', 'Prof. R. Go', 'occupied'],
+  ],
+  'Room 303': [
+    ['10:00', '12:00', 'Security Operations Exercise', 'lab_activity', 'Prof. S. Ong', 'occupied'],
+  ],
+  'Room 304': [
+    ['13:00', '14:30', 'Capstone Project Consultation', 'class', 'Prof. V. Lee', 'occupied'],
+  ],
 };
 
 export function createDemoData(demoWeekStart) {
-  const venues = venueDefinitions.map(([room_code, name, floor, location_label, capacity, equipment]) => ({
+  const venues = venueDefinitions.map(([
+    room_code,
+    name,
+    floor,
+    location_label,
+    capacity,
+    equipment,
+  ]) => ({
     room_code,
     name,
     floor,
@@ -70,7 +97,7 @@ export function createDemoData(demoWeekStart) {
           entry_type,
           instructor_name,
           state,
-          locked_by: state === 'locked' ? 'Dean' : null,
+          locked_by: null,
           is_demo: true,
           dataset_label: 'Demo week',
         });
@@ -79,28 +106,50 @@ export function createDemoData(demoWeekStart) {
   }
 
   const students = [
-    ['Ashley Gabrielle C. Alcantara', '2022-10892', 'BSCS 3A'],
-    ['Miguel Antonio D. Santos', '2021-10417', 'BSIT 4B'],
-    ['Bianca Marie R. Cruz', '2023-11208', 'BSCS 2B'],
-  ].map(([full_name, student_id, program_section]) => ({
-    full_name,
-    student_id,
-    program_section,
-    is_demo: true,
-    dataset_label: 'Demo week',
-  }));
-
-  const definitions = [
-    ['RES-DEMO-0001', 'Room 201', '2022-10892', 1, '15:00', '16:30', 'Ethics with Peace Studies Filming', 'pending_approval', 'pending', null, null, null],
-    ['RES-DEMO-0002', 'Room 102', '2021-10417', 2, '13:00', '14:00', 'Electronics Society Planning', 'approved', 'approved', 'Test Administrator', 1, 'Schedule verified'],
-    ['RES-DEMO-0003', 'Room 103', '2023-11208', 3, '10:00', '11:00', 'Multimedia Club Orientation', 'rejected', 'rejected', 'Test Administrator', 2, 'Requested equipment unavailable'],
-    ['RES-DEMO-0004', 'Room 104', '2021-10417', 4, '13:00', '14:30', 'Student Leadership Seminar', 'pending_approval', 'pending', null, null, null],
-    ['RES-DEMO-0005', 'Room 202', '2023-11208', 5, '13:00', '14:00', 'Programming Contest Practice', 'approved', 'approved', 'Test Administrator', 4, null],
-    ['RES-DEMO-0006', 'Room 204', '2022-10892', 6, '09:00', '10:00', 'Hardware Workshop Preparation', 'rejected', 'rejected', 'Test Administrator', 5, 'Room setup conflict'],
+    {
+      full_name: 'Ashley Gabrielle C. Alcantara',
+      student_id: '2022-10892',
+      program_section: 'BSCS 3A',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+    {
+      full_name: 'Miguel Antonio D. Santos',
+      student_id: '2021-10417',
+      program_section: 'BSIT 4B',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+    {
+      full_name: 'Bianca Marie R. Cruz',
+      student_id: '2023-11208',
+      program_section: 'BSCS 2B',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
   ];
-  const reservations = definitions.map(([
-    reservation_id, venue_id, requested_by, day, start_time, end_time, purpose, status,
-    decision, decided_by, decidedDay, decision_reason,
+
+  const reservationDefinitions = [
+    ['RES-DEMO-0001', 'Room 201', '2022-10892', 1, '15:00', '16:30', 'Ethics with Peace Studies Filming', 'pending_approval', 'pending', null, null, null],
+    ['RES-DEMO-0002', 'Room 102', '2021-10417', 2, '13:00', '14:00', 'Electronics Society Planning', 'approved', 'approved', 'Test Administrator', `${addDays(demoWeekStart, 1)}T17:00:00.000Z`, 'Schedule verified'],
+    ['RES-DEMO-0003', 'Room 103', '2023-11208', 3, '10:00', '11:00', 'Multimedia Club Orientation', 'rejected', 'rejected', 'Test Administrator', `${addDays(demoWeekStart, 2)}T17:00:00.000Z`, 'Requested equipment unavailable'],
+    ['RES-DEMO-0004', 'Room 104', '2021-10417', 4, '13:00', '14:30', 'Student Leadership Seminar', 'pending_approval', 'pending', null, null, null],
+    ['RES-DEMO-0005', 'Room 202', '2023-11208', 5, '13:00', '14:00', 'Programming Contest Practice', 'approved', 'approved', 'Test Administrator', `${addDays(demoWeekStart, 4)}T17:00:00.000Z`, null],
+    ['RES-DEMO-0006', 'Room 204', '2022-10892', 6, '09:00', '10:00', 'Hardware Workshop Preparation', 'rejected', 'rejected', 'Test Administrator', `${addDays(demoWeekStart, 5)}T17:00:00.000Z`, 'Room setup conflict'],
+  ];
+  const reservations = reservationDefinitions.map(([
+    reservation_id,
+    venue_id,
+    requested_by,
+    day,
+    start_time,
+    end_time,
+    purpose,
+    status,
+    decision,
+    decided_by,
+    decided_at,
+    decision_reason,
   ], index) => ({
     reservation_id,
     venue_id,
@@ -114,47 +163,133 @@ export function createDemoData(demoWeekStart) {
     approver_role: 'MIS Administrator',
     created_at: `${addDays(demoWeekStart, Math.max(0, day - 1))}T${String(8 + index).padStart(2, '0')}:00:00.000Z`,
     decided_by,
-    decided_at: decidedDay === null ? null : `${addDays(demoWeekStart, decidedDay)}T17:00:00.000Z`,
+    decided_at,
     decision_reason,
     is_demo: true,
     dataset_label: 'Demo week',
   }));
 
-  const decisionLogs = reservations.filter((reservation) => reservation.decision !== 'pending').map((reservation) => ({
-    reservation_id: reservation.reservation_id,
-    action: reservation.decision,
-    performed_by: reservation.decided_by,
-    performed_at: reservation.decided_at,
-    reason: reservation.decision_reason,
+  const decisionLogs = reservations
+    .filter((reservation) => reservation.decision !== 'pending')
+    .map((reservation) => ({
+      reservation_id: reservation.reservation_id,
+      action: reservation.decision,
+      performed_by: reservation.decided_by,
+      performed_at: reservation.decided_at,
+      reason: reservation.decision_reason,
+      is_demo: true,
+      dataset_label: 'Demo week',
+    }));
+
+  const councilRoles = [
+    ['ROLE-001', 'Council President'],
+    ['ROLE-002', 'Council Secretary'],
+    ['ROLE-003', 'Events Coordinator'],
+  ].map(([role_id, name]) => ({
+    role_id,
+    name,
+    scope: 'council',
     is_demo: true,
     dataset_label: 'Demo week',
   }));
+
+  const members = students.map((student, index) => ({
+    member_id: student.student_id,
+    student_id: student.student_id,
+    full_name: student.full_name,
+    program_section: student.program_section,
+    status: 'active',
+    role: index === 1 ? 'student' : 'council',
+    council_role_id: index === 0 ? 'ROLE-001' : index === 2 ? 'ROLE-003' : null,
+    disabled: false,
+    version: 1,
+    is_demo: true,
+    dataset_label: 'Demo week',
+  }));
+
+  const events = [
+    {
+      event_id: 'EVENT-DEMO-0001',
+      title: 'CSD Fair Badminton Tryout',
+      description: 'Open tryouts for students joining the CSD Fair badminton team.',
+      category: 'Sports',
+      venue_id: 'Room 104',
+      starts_at: `${addDays(demoWeekStart, 3)}T13:00:00+08:00`,
+      ends_at: `${addDays(demoWeekStart, 3)}T15:00:00+08:00`,
+      status: 'scheduled',
+      registered: 28,
+      capacity: 60,
+      banner_url: null,
+      version: 1,
+      created_by: 'Test Administrator',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+    {
+      event_id: 'EVENT-DEMO-0002',
+      title: 'Student Technology Forum',
+      description: 'A campus forum on emerging computing technologies and student projects.',
+      category: 'Academic',
+      venue_id: 'Room 101',
+      starts_at: `${addDays(demoWeekStart, 5)}T16:00:00+08:00`,
+      ends_at: `${addDays(demoWeekStart, 5)}T18:00:00+08:00`,
+      status: 'scheduled',
+      registered: 34,
+      capacity: 50,
+      banner_url: null,
+      version: 1,
+      created_by: 'Test Administrator',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
+  ];
 
   return {
     venues,
     scheduleEntries,
     reservations,
     students,
+    members,
+    councilRoles,
+    events,
     adminSession: {
-      full_name: 'Test Administrator', role: 'ADMIN', session_label: 'Test session', session_id: 'admin-demo', is_demo: true, dataset_label: 'Demo week',
+      full_name: 'Test Administrator',
+      role: 'ADMIN',
+      session_label: 'Test session',
+      session_id: 'admin-demo',
+      is_demo: true,
+      dataset_label: 'Demo week',
     },
     councilSession: {
-      full_name: 'Ashley Gabrielle C. Alcantara', student_id: '2022-10892', program_section: 'BSCS 3A', role: 'COUNCIL', session_id: 'council-demo', is_demo: true, dataset_label: 'Demo week',
+      full_name: 'Ashley Gabrielle C. Alcantara',
+      student_id: '2022-10892',
+      program_section: 'BSCS 3A',
+      role: 'COUNCIL',
+      session_id: 'council-demo',
+      is_demo: true,
+      dataset_label: 'Demo week',
     },
     decisionLogs,
     endorsements: [],
+    calendar: {
+      term_label: 'Term 2',
+      week_label: 'W6',
+      is_demo: true,
+      dataset_label: 'Demo week',
+    },
     notices: [{
       notice_id: 'NOTICE-001',
-      label: 'NOTICE',
       title: 'CSD Fair Badminton Tryout',
-      message: 'The Social Hall is currently occupied for tryouts until 3:00 PM. Please route alternative indoor activities to available vacant rooms.',
+      body: 'The Social Hall is currently occupied for tryouts until 3:00 PM. Please route activities to available vacant rooms.',
+      label: 'NOTICE',
+      message: 'The Social Hall is currently occupied for tryouts until 3:00 PM. Please route activities to available vacant rooms.',
+      image_key: 'badminton_tryout',
       guidelines_available: true,
-      guidelines_text: 'Use only rooms marked Available Now. Confirm the room capacity before redirecting participants, keep corridors clear, and coordinate any reservation request through the Room Bookings page.',
+      guidelines_text: 'Use only rooms marked Available Now. Confirm room capacity, keep corridors clear, and submit reservation requests through Room Bookings.',
       is_active: true,
       is_demo: true,
       dataset_label: 'Demo week',
     }],
-    calendar: { term_label: 'Term 2', week_label: 'W6', is_demo: true, dataset_label: 'Demo week' },
     dateOptions: Array.from({ length: 7 }, (_, day) => addDays(demoWeekStart, day)),
   };
 }

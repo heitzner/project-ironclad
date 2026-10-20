@@ -1,75 +1,71 @@
-# IronClad room-booking backend
+# Room & Laboratory Booking API
 
-Express backend for the student, administrator, and council room-booking workflows. The implementation is intentionally in-memory: it has no PostgreSQL client, ORM, migrations, or database connection. Restarting the process restores the seeded demo-week data.
+Backend-only Express implementation for the IronClad booking catalog and selected-venue sidebar.
+It has no database, ORM, cache, file persistence, or external timetable source. Venues, schedules,
+students, and reservations are held in process memory and reset to Demo week data whenever the
+server restarts.
 
-## Run and test
-
-Requires Node.js 20 or newer.
+## Run
 
 ```powershell
 npm install
+npm test
 npm start
 ```
 
-The server listens on `http://localhost:3000` by default. Copy `.env.example` values into the process environment when overrides are needed.
+Configuration defaults are documented in `.env.example`. Demo week begins on the current week's
+Monday unless `DEMO_WEEK_START` is supplied.
 
-Browser clients listed in `CORS_ALLOWED_ORIGINS` may call the API directly. The default permits Vite on `localhost:5173` and `127.0.0.1:5173`. The frontend reads its API base URL from `VITE_API_URL`; production deployments may leave it empty when the API is served from the same origin.
+## Endpoints
 
-```powershell
-npm test
-```
-
-## Time configuration
-
-- Morning: `07:00`–`12:00`
-- Evening: `13:00`–`18:00`
-- All day: the combined morning and evening windows
-- Operational timetable: `07:00`–`21:30`
-- Utilization is **booked time**, rounded to the nearest whole percent.
-
-All ranges are configuration values in `.env.example`.
-
-## Student/shared booking API
-
+- `GET /health`
+- `GET /booking/notices`
 - `GET /venues?date=YYYY-MM-DD&period=all_day|morning|evening&floor=1|2|3|4&q=text`
 - `GET /venues/:roomCode?date=YYYY-MM-DD&period=all_day|morning|evening`
 - `GET /venues/:roomCode/occupancy?date=YYYY-MM-DD&at_time=HH:mm`
-- `GET /venues/:roomCode/vacancy?date=YYYY-MM-DD&start_time=HH:mm&end_time=HH:mm`
+- `GET /venues/:roomCode/vacancy?date=YYYY-MM-DD&requested_start=HH:mm`
 - `GET /dates/options`
-- `GET /reservations/config?room_code=Room%20101&date=YYYY-MM-DD`
+- `GET /reservations/config?student_id=2022-10892`
 - `POST /reservations/lock`
+- `POST /reservations/:reservationId/approve`
+- `POST /reservations/:reservationId/reject`
 
-Example reservation body:
+### Admin Room Bookings
 
-```json
-{
-  "room_code": "Room 101",
-  "date": "2026-10-20",
-  "start_time": "10:00",
-  "end_time": "11:00",
-  "purpose": "Council planning session",
-  "student_id": "2022-10892"
-}
-```
-
-New reservations are pending until an administrator decides them. Floor 4 is visible but its details are unavailable and it cannot be reserved. Room 203 remains unavailable because it is locked by the dean.
-
-## Administrator API
-
-Send `x-ironclad-test-session: admin-demo` with every admin request.
+Admin requests use the configured `x-ironclad-test-session` header. The seeded ADMIN session value
+is `admin-demo`; missing or unknown sessions return 401, while the recognized `student-demo`
+non-admin session returns 403.
 
 - `GET /admin/session`
-- `GET /admin/room-bookings/venues`
-- `GET /admin/booking-requests`
+- `GET /admin/room-bookings/venues?q=&occupancy=all&date=YYYY-MM-DD&period=all_day`
+- `GET /admin/booking-requests?q=&decision=all&occupancy=all&room_code=&sort=created_at&limit=20&offset=0`
 - `GET /admin/booking-requests/:reservationId`
 - `POST /admin/booking-requests/:reservationId/approve`
 - `POST /admin/booking-requests/:reservationId/reject`
+- `GET /admin/events`
+- `POST /admin/events`
+- `PUT /admin/events/:eventId`
+- `POST /admin/events/:eventId/complete`
+- `GET /admin/members`
+- `GET /admin/council-roles`
+- `PATCH /admin/members/:memberId/council-role`
 
-The legacy decision aliases `/reservations/:reservationId/approve` and `/reservations/:reservationId/reject` use the same administrator check.
+Approval and rejection bodies accept an optional `reason`. Decisions are final and append an
+entry to the shared in-memory decision log. The six seeded requests cover pending, approved, and
+rejected states. The admin lists default to `connection_state: connected`; setting
+`ADMIN_CONNECTION_STATE=not_connected` returns empty lists with no sample totals.
 
-## Council API
+Campus events and council-role assignments use the same authenticated in-memory repository. Event
+and member mutations include a numeric `version`; stale writes return `409 VERSION_CONFLICT`.
+Event venues are validated and overlapping active events in the same venue return `409`.
+The local Vite origin is allowed by `CORS_ALLOWED_ORIGINS` so browser reads and writes can include
+the configured admin test-session header.
 
-Send `x-ironclad-test-session: council-demo` with every council request.
+### Council Room Bookings
+
+Council requests use the same configurable test-session header with the seeded value
+`council-demo`. Council members can browse live venue/request information, create reservation
+requests, and write one endorsement per request. They cannot approve or reject reservations.
 
 - `GET /council/session`
 - `GET /council/venues`
@@ -82,25 +78,20 @@ Send `x-ironclad-test-session: council-demo` with every council request.
 - `POST /council/reservations`
 - `POST /council/booking-requests/:reservationId/endorsements`
 
-Council users can configure and create pending reservations and can attach one endorsement letter to a reservation. They cannot approve or reject requests; no council decision endpoints are registered.
+The lock body contains `room_code`, `date`, `start_time`, `end_time`, `purpose`, and `student_id`.
+It creates a `pending_approval` hold rather than an immediate lock. Pending holds block overlapping
+requests and participate in utilization and status calculations. Approval changes a hold to a
+locked schedule entry; rejection releases it. The legacy non-admin-prefixed approval paths remain
+as compatibility aliases but require the same ADMIN test session and use the same decision log.
 
-Example endorsement body:
+Times use 24-hour `HH:mm` format. User-selected reservation times use 30-minute increments.
+Morning is 07:00-12:00 and evening is 13:00-18:00. All-day combines those periods and excludes
+the 12:00-13:00 gap for utilization. Vacancy suggestions use the configurable 07:00-21:30
+operational day so the evening schedules shown in the sidebar are represented.
 
-```json
-{
-  "message": "The council endorses this reservation request."
-}
-```
+## Venue counts
 
-## Errors
-
-Validation and domain failures use JSON responses with an `error.code` and `error.message`. The implemented status codes are:
-
-- `400` malformed JSON or invalid query values
-- `401` missing test session
-- `403` wrong role or disconnected role service
-- `404` missing route, venue, reservation, notice, or student
-- `409` overlapping reservation, duplicate decision, or duplicate endorsement
-- `422` unavailable venue or invalid reservation semantics
-
-The in-memory repository is isolated behind `InMemoryBookingRepository`, so a database manager can replace it later without adding database dependencies now.
+The seed contains the explicitly requested room ranges 101-104 through 401-404. The unfiltered
+All Venues catalog returns the 12 usable rooms on Floors 1-3. Floor 4 is queried explicitly with
+`floor=4` and returns rooms 401-404 as unavailable with details disabled. Floor-tab metadata reports
+`all_venues: 12` and four rooms for each individual floor.
