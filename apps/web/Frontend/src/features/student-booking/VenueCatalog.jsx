@@ -23,6 +23,11 @@ function Badge({ view, selected = false }) {
 
 export default function VenueCatalog({ views, total, draft, selectedId, busy, onChange, onSelect }) {
   const [filterOpen, setFilterOpen] = useState(false)
+  const selectWithKeyboard = (event, roomId) => {
+    if (busy || !['Enter', ' '].includes(event.key)) return
+    event.preventDefault()
+    onSelect(roomId)
+  }
   return <section className="booking-catalog" aria-label="Browse venues">
     <div className="booking-filter-strip">
       <div className="booking-floors" role="group" aria-label="Filter by floor">
@@ -41,16 +46,16 @@ export default function VenueCatalog({ views, total, draft, selectedId, busy, on
     <div className="booking-catalog-meta"><span role="status">{views.length} {views.length === 1 ? 'venue' : 'venues'} shown{draft.statusFilter !== 'all' && ' · availability filter active'}</span><span id="booking-floor4-note">Floor 4 details unavailable</span></div>
     {!views.length ? <div className="booking-no-results"><h2>No venues found</h2><p>Try another room name, floor, or availability filter.</p><button type="button" disabled={busy} onClick={() => onChange({ search: '', statusFilter: 'all' })}>Clear search &amp; status filter</button></div>
       : draft.floor === 'all' ? <div className="booking-table-scroll" role="region" aria-label="Venue catalog table, scroll for more rooms" tabIndex="0"><table className="booking-table"><caption className="booking-sr-only">Venues for the selected date and shift</caption><thead><tr><th scope="col">Room</th><th scope="col">Facility details</th><th scope="col">Capacity</th><th scope="col">Utilization</th><th scope="col">Status</th></tr></thead><tbody>
-        {views.map(view => <tr key={view.room.id} className={selectedId === view.room.id ? 'is-selected' : ''}>
-          <th scope="row"><button type="button" className="booking-room-button" aria-label={`Select Room ${view.room.id}, ${view.room.name}`} aria-pressed={selectedId === view.room.id} disabled={busy} onClick={() => onSelect(view.room.id)}>{selectedId === view.room.id && <BookingIcon name="deaf7" />}Room {view.room.id}</button></th>
+        {views.map(view => <tr key={view.room.id} className={selectedId === view.room.id ? 'is-selected' : ''} tabIndex={busy ? -1 : 0} aria-selected={selectedId === view.room.id} onClick={() => { if (!busy) onSelect(view.room.id) }} onKeyDown={(event) => selectWithKeyboard(event, view.room.id)}>
+          <th scope="row"><button type="button" className="booking-room-button" aria-label={`Select Room ${view.room.id}, ${view.room.name}`} aria-pressed={selectedId === view.room.id} disabled={busy} onClick={(event) => { event.stopPropagation(); onSelect(view.room.id) }}>{selectedId === view.room.id && <BookingIcon name="deaf7" />}Room {view.room.id}</button></th>
           <td><div className="booking-facility-name">{view.room.name}{selectedId === view.room.id && <span className="booking-table-selected">Selected Venue</span>}</div><div className="booking-location"><BookingIcon name={selectedId === view.room.id ? '65e75' : 'b4a92'} />{view.room.location}</div></td>
           <td>{view.room.capacity} Seats</td><td><Utilization view={view} compact selected={selectedId === view.room.id} /></td><td><Badge view={view} /></td>
         </tr>)}
       </tbody></table></div> : <div className="booking-card-grid">
-        {views.map(view => { const selected = selectedId === view.room.id; return <article key={view.room.id} className={`booking-room-card ${selected ? 'is-selected' : ''}`} aria-label={`Room ${view.room.id}`}>
+        {views.map(view => { const selected = selectedId === view.room.id; return <article key={view.room.id} className={`booking-room-card ${selected ? 'is-selected' : ''}`} aria-label={`Room ${view.room.id}, ${view.room.name}`} onClick={() => { if (!busy) onSelect(view.room.id) }}>
           <div className="booking-card-heading"><div><h2>Room {view.room.id}</h2><Badge view={view} selected={selected} /></div><BookingIcon name={selected ? view.room.selectedIcon : view.room.icon} /></div>
           <h3>{view.room.name}</h3><p className="booking-capacity">{view.room.capacity} Seats</p><Utilization view={view} selected={selected} />
-          <div className="booking-card-footer"><span className="booking-location"><BookingIcon name={selected ? 'e08cb' : '25f66'} />{view.room.location}</span><button type="button" aria-label={`${selected ? 'Selected' : 'Select'} Room ${view.room.id}`} aria-pressed={selected} disabled={busy} onClick={() => onSelect(view.room.id)}>{selected ? <>Active Slot Loaded<BookingIcon name="2ee89" /></> : 'Select Venue'}</button></div>
+          <div className="booking-card-footer"><span className="booking-location"><BookingIcon name={selected ? 'e08cb' : '25f66'} />{view.room.location}</span><button type="button" aria-label={`${selected ? 'Selected' : 'Select'} Room ${view.room.id}`} aria-pressed={selected} disabled={busy} onClick={(event) => { event.stopPropagation(); onSelect(view.room.id) }}>{selected ? <>Active Slot Loaded<BookingIcon name="2ee89" /></> : 'Select Venue'}</button></div>
         </article> })}
       </div>}
   </section>

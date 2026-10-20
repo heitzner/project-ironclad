@@ -1,4 +1,4 @@
-import { ApiError } from '../http/ApiError.js'
+import { HttpError } from '../http/errors.js'
 
 const searchableText = (post) => [
   post.title,
@@ -55,7 +55,7 @@ export class NewsFeedService {
   getById(postId) {
     const post = this.repository.findById(postId)
     if (!post) {
-      throw new ApiError(404, 'POST_NOT_FOUND', 'News feed post was not found.')
+      throw new HttpError(404, 'POST_NOT_FOUND', 'News feed post was not found.')
     }
     return { data: post }
   }

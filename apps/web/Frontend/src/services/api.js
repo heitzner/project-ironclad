@@ -12,7 +12,7 @@ export class ApiRequestError extends Error {
 
 export async function apiRequest(path, options = {}) {
   if (!apiBaseUrl) {
-    throw new ApiRequestError('The news feed service URL is not configured.', {
+    throw new ApiRequestError('The IronClad API URL is not configured.', {
       code: 'API_URL_MISSING',
     })
   }
@@ -23,23 +23,34 @@ export async function apiRequest(path, options = {}) {
       ...options,
       headers: {
         Accept: 'application/json',
+        'x-ironclad-test-session': 'admin-demo',
         ...options.headers,
       },
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error
-    throw new ApiRequestError('The news feed service could not be reached.')
+    throw new ApiRequestError('The IronClad API could not be reached. Confirm that the backend is running.')
   }
 
-  const isJson = response.headers.get('content-type')?.includes('application/json')
-  const body = isJson ? await response.json() : null
+  const contentType = response.headers.get('content-type') || ''
+  const payload = contentType.includes('application/json') ? await response.json() : null
   if (!response.ok) {
-    throw new ApiRequestError(body?.error?.message ?? 'The request could not be completed.', {
+    throw new ApiRequestError(payload?.error?.message || 'The IronClad API rejected the request.', {
       status: response.status,
-      code: body?.error?.code ?? 'REQUEST_FAILED',
-      details: body?.error?.details,
+      code: payload?.error?.code || 'REQUEST_FAILED',
+      details: payload?.error?.details,
     })
   }
+  if (!payload) throw new ApiRequestError('The IronClad API returned an invalid response.', {
+    code: 'INVALID_RESPONSE',
+  })
+  return payload
+}
 
-  return body
+export function jsonOptions(method, body) {
+  return {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }
 }
