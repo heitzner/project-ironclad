@@ -51,7 +51,7 @@ export default function AdminSidebar({ section, onNavigate }) {
                 to={id === 'dashboard' ? '/admin' : `/admin/${id}`}
                 end={id === 'dashboard'}
                 onClick={event => { if (onNavigate) { event.preventDefault(); onNavigate(id) }; setMobileNavigationOpen(false) }}
-                className={`flex min-h-11 w-full items-center justify-start gap-3 rounded-control px-3 py-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${section === id ? 'bg-primary text-white shadow-card' : 'text-textSecondary hover:bg-cardBg hover:text-dark'} disabled:cursor-default`}
+                className={`flex min-h-11 w-full items-center justify-start gap-3 rounded-control px-3 py-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${section === id ? 'bg-dark text-white shadow-card' : 'text-textSecondary hover:bg-cardBg hover:text-dark'} disabled:cursor-default`}
               >
                 <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
                 {label}

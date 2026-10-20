@@ -29,7 +29,7 @@ export function ViewState({ state, title, description, onRetry, children }) {
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-11 rounded-control bg-primary px-4 py-2 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-11 rounded-control bg-dark px-4 py-2 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Retry
         </button>

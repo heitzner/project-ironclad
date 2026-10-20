@@ -234,7 +234,7 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
                 <button
                   type="submit"
                   disabled={!canSubmit || mutation.busy || mutation.blocked || !individualAgreed}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-dark px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-deep disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   <span>{mutation.busy ? 'Submitting…' : 'Confirm Registration'}</span>
@@ -287,7 +287,7 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
                   <span className="text-[11px] font-bold uppercase tracking-[0.44px] text-textPrimary">
                     Roster Setup {teamSize ? (' (' + teamSize + ' Players)') : ''}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-dark">
                     <Users className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>{teamSize ? (teamSize + ' Required') : 'Roster requirements unavailable'}</span>
                   </span>
@@ -303,7 +303,7 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
                         <span className="text-[11px] font-bold text-deep">
                           {player.role || `Player ${index + 1}`}
                         </span>
-                        <span className="text-[10px] font-semibold text-primary bg-cardBg px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-semibold text-dark bg-cardBg px-2 py-0.5 rounded-full">
                           Slot #{index + 1}
                         </span>
                       </div>
@@ -389,7 +389,7 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
                 <button
                   type="submit"
                   disabled={!canSubmit || mutation.busy || mutation.blocked || !teamAgreed || !teamName.trim()}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-dark px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-deep disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   <span>{mutation.busy ? 'Submitting…' : 'Submit Team Bracket'}</span>
@@ -435,7 +435,7 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
             <button
               type="button"
               onClick={handleClose}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[14px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-dark text-[14px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               <span>Return to Dashboard</span>

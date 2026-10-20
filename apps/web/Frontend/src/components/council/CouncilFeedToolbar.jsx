@@ -29,7 +29,7 @@ export default function CouncilFeedToolbar({ criteria, dispatch, categories, cou
           className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark"
         ><img src={clearIcon} alt="" /></button>}
       </div>
-      <div className="relative min-w-0 flex-[1_1_10rem]">
+      <div className="relative min-w-0 flex-[1_1_10rem] lg:max-w-48">
         <select
           aria-label="Filter campaigns by category" value={criteria.category}
           onChange={(event) => dispatch({ type: 'category', value: event.target.value })}

@@ -63,12 +63,12 @@ export default function BookingManagement({
               Floor {value}
             </button>
           ))}
-          <label className="relative min-w-0 flex-1">
+          <label className="relative min-w-0 flex-[1_1_12rem]">
             <span className="sr-only">Search rooms</span>
             <Search aria-hidden="true" className="absolute left-3 top-3.5 h-4 w-4 text-textMuted" />
             <input
               type="search"
-              className="admin-field pl-9"
+              className="admin-field admin-search-field"
               placeholder="Search room or facility…"
               value={query}
               onChange={(event) => setQuery(event.target.value)}

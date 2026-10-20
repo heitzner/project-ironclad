@@ -33,7 +33,7 @@ export default function UserManagement({
         className="flex flex-wrap items-center gap-3 rounded-panel bg-white p-4"
         aria-label="Member search and role filters"
       >
-        <label className="min-w-0 flex-1">
+        <label className="min-w-0 flex-[1_1_16rem]">
           <span className="sr-only">Search members</span>
           <input
             className="admin-field"
@@ -43,7 +43,7 @@ export default function UserManagement({
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <label>
+        <label className="min-w-0 max-w-full">
           <span className="sr-only">Filter by council role</span>
           <select
             className="admin-field"

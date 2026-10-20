@@ -41,7 +41,7 @@ export default function EventManagement({
         className="flex flex-wrap items-center gap-3 rounded-panel bg-white p-4"
         aria-label="Event search and actions"
       >
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-[1_1_12rem]">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Megaphone aria-hidden="true" className="h-4 w-4 text-dark" />
             Feed &amp; Announcements
@@ -50,7 +50,7 @@ export default function EventManagement({
             Campus activities and event campaigns.
           </p>
         </div>
-        <label className="min-w-0 flex-1">
+        <label className="min-w-0 flex-[1_1_12rem]">
           <span className="sr-only">Search events</span>
           <input
             type="search"
@@ -60,7 +60,7 @@ export default function EventManagement({
             placeholder="Search events…"
           />
         </label>
-        <label>
+        <label className="min-w-0 max-w-full">
           <span className="sr-only">Event category</span>
           <select
             className="admin-field"

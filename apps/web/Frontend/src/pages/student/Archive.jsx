@@ -223,7 +223,7 @@ export function ArchiveContent({ resource: archive }) {
         </div>
         <Link
           to="/support"
-          className="shrink-0 font-semibold text-primary transition-colors duration-150 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+          className="shrink-0 font-semibold text-dark transition-colors duration-150 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
         >
           Storage Governance Policy
         </Link>

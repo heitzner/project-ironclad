@@ -50,7 +50,7 @@ export default function ViewerPage({ data, loading = false, error, onRetry, onCr
         <input ref={input} type="search" aria-label="Search campus news" value={criteria.query} onChange={event => change({ query: event.target.value })} placeholder="Search announcements, event campaigns, venues, or organizations…" className="min-h-11 min-w-0 flex-1 rounded-control bg-transparent px-1 text-[13px] text-textPrimary placeholder:text-textSecondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark" />
         <button type="button" aria-label="Clear campus news search" disabled={!criteria.query} onClick={() => { change({ query: '' }); input.current?.focus() }} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark disabled:opacity-50"><img src={clearIcon} alt="" /></button>
       </div>
-      <label className="relative min-w-0 flex-[1_1_10rem]"><span className="sr-only">Campus news category</span>
+      <label className="relative min-w-0 flex-[1_1_10rem] lg:max-w-48"><span className="sr-only">Campus news category</span>
         <select value={criteria.category} onChange={event => change({ category: event.target.value })} className="min-h-11 w-full min-w-0 appearance-none rounded-control border border-textMuted bg-selectBg py-2 pl-3 pr-8 text-[11px] font-semibold text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dark">
           <option value="">All Categories</option>{feed?.categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}
         </select><img src={categoryIcon} alt="" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />

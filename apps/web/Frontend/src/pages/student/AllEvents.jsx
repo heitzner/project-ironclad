@@ -101,11 +101,11 @@ export function AllEventsContent({ resource: eventsResource, preview = false }) 
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[12px]">
           <Link
             to="/"
-            className="rounded-full bg-cardBg px-2.5 py-0.5 text-[10px] font-bold text-primary uppercase tracking-[0.5px] transition-colors hover:bg-cardBg/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex min-h-11 items-center rounded-full bg-cardBg px-2.5 py-0.5 text-[10px] font-bold text-dark uppercase tracking-[0.5px] transition-colors hover:bg-cardBg/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             IronClad Portal
           </Link>
-          <span className="text-textMuted select-none">/</span>
+          <span aria-hidden="true" className="text-textSecondary select-none">/</span>
           <span className="font-medium text-textSecondary">
             Campaigns & Events Directory
           </span>
@@ -230,7 +230,7 @@ export function AllEventsContent({ resource: eventsResource, preview = false }) 
             <button
               type="button"
               onClick={handleResetFilters}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-dark"
+              className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-control bg-dark px-4 py-2 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Reset Filters
             </button>
@@ -272,12 +272,12 @@ export function AllEventsContent({ resource: eventsResource, preview = false }) 
                     {/* Top-left Badges */}
                     <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
                       {firstTag && (
-                        <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold tracking-[0.5px] text-white shadow-sm">
+                        <span className="rounded-full bg-dark px-2.5 py-1 text-[10px] font-semibold tracking-[0.5px] text-white shadow-sm">
                           {firstTag}
                         </span>
                       )}
                       {secondTag && (
-                        <span className="rounded-full bg-black/60 backdrop-blur-[2px] px-2.5 py-1 text-[10px] font-semibold tracking-[0.5px] text-white">
+                        <span className="rounded-full bg-deep px-2.5 py-1 text-[10px] font-semibold tracking-[0.5px] text-white">
                           {secondTag}
                         </span>
                       )}
@@ -285,7 +285,7 @@ export function AllEventsContent({ resource: eventsResource, preview = false }) 
 
                     {/* Bottom-right Open Slots / Status Badge */}
                     <div className="absolute right-3 bottom-3">
-                      <span className="rounded bg-black/60 backdrop-blur-[2px] px-2 py-0.5 text-[10px] font-medium tracking-[0.5px] text-white">
+                      <span className="rounded bg-deep px-2 py-0.5 text-[10px] font-medium tracking-[0.5px] text-white">
                         {event.badge || (Number.isInteger(event.registered) && Number.isInteger(event.capacity) ? (event.registered < event.capacity ? 'Open Slots' : 'Full') : 'Availability not provided')}
                       </span>
                     </div>
@@ -323,7 +323,7 @@ export function AllEventsContent({ resource: eventsResource, preview = false }) 
                         <button
                           type="button"
                           onClick={() => setSelectedRegisterEvent(event)}
-                          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-dark px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                         >
                           <span>{event.actionLabel || 'Register'}</span>
                           <ArrowRight className="h-3 w-3" aria-hidden="true" />

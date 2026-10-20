@@ -70,7 +70,7 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
           <Link
             to="/booking"
             onClick={onClose}
-            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-primary px-4 py-2 text-[13px] font-semibold text-primary transition-colors duration-150 hover:bg-cardBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-dark px-4 py-2 text-[13px] font-semibold text-dark transition-colors duration-150 hover:bg-cardBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Calendar className="h-4 w-4" aria-hidden="true" />
             <span>Go to Venue Booking</span>
@@ -79,7 +79,7 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 rounded-xl bg-primary px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-11 rounded-xl bg-dark px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Close
           </button>

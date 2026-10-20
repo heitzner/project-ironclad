@@ -24,7 +24,7 @@ export function EventCard({
   const isFull = capacity > 0 && registered >= capacity
 
   const isInstitutional = event.status === 'Institutional Event'
-  const statusBg = isInstitutional ? 'bg-dark' : 'bg-primary'
+  const statusBg = isInstitutional ? 'bg-deep' : 'bg-dark'
 
   const isCommittee = event.organizerType === 'committee'
 
@@ -60,14 +60,14 @@ export function EventCard({
         {/* Bottom row chips */}
         <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center justify-between gap-2">
           {event.venue && (
-            <span className="flex items-center gap-1 rounded-chip bg-black/40 px-2 py-0.5 text-[10px] font-medium leading-[14px] tracking-[0.5px] text-white backdrop-blur-[2px]">
+            <span className="flex items-center gap-1 rounded-chip bg-deep px-2 py-0.5 text-[10px] font-medium leading-[14px] tracking-[0.5px] text-white">
               <MapPin className="h-3 w-3 text-ring shrink-0" aria-hidden="true" />
               <span className="truncate">{event.venue}</span>
             </span>
           )}
 
           {event.schedule && (
-            <span className="flex items-center gap-1 rounded-chip bg-primary/80 px-2 py-0.5 text-[10px] font-semibold leading-[14px] text-white backdrop-blur-[2px]">
+            <span className="flex items-center gap-1 rounded-chip bg-dark px-2 py-0.5 text-[10px] font-semibold leading-[14px] text-white">
               <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{event.schedule}</span>
             </span>
@@ -83,7 +83,7 @@ export function EventCard({
             <div className="flex flex-wrap items-center gap-1.5 pb-1">
               {event.tags.map((tag, idx) => {
                 let tagClass = 'bg-white text-textSecondary font-medium'
-                if (idx === 0) tagClass = 'bg-white text-primary font-bold'
+                if (idx === 0) tagClass = 'bg-white text-dark font-bold'
                 else if (idx === 1) tagClass = 'bg-soft/20 text-deep font-semibold'
 
                 return (
@@ -148,7 +148,7 @@ export function EventCard({
             type="button"
             onClick={() => onRegister?.(event)}
             disabled={isFull}
-            className="flex min-h-11 items-center gap-1 rounded-lg bg-primary px-4 py-1.5 text-[11px] font-semibold leading-4 text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:cursor-not-allowed disabled:bg-track disabled:text-textMuted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex min-h-11 items-center gap-1 rounded-lg bg-dark px-4 py-1.5 text-[11px] font-semibold leading-4 text-white shadow-card transition-colors duration-150 hover:bg-deep disabled:cursor-not-allowed disabled:bg-track disabled:text-textMuted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span>{isFull ? 'Fully Booked' : event.actionLabel || 'Register'}</span>
             {!isFull && <ArrowRight className="h-3 w-3 shrink-0" aria-hidden="true" />}

@@ -48,7 +48,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
       }}
     >
       <div className="mx-auto flex h-full max-w-content items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <Link to={homeTo} className="flex shrink-0 items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Link to={homeTo} className="flex min-h-11 shrink-0 items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <img src={user ? ironcladLogo : viewerLogo} alt="IronClad" className="h-8 w-8 object-contain" />
           <span className="text-[15px] font-bold leading-[22px] tracking-[-0.375px]">IronClad</span>
           <span className="ml-1 hidden rounded-full bg-navActive px-1 py-0.5 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.5px] text-white sm:inline">
