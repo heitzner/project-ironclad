@@ -1,10 +1,8 @@
-import { createApp } from './app.js'
-import { config } from './config.js'
+import { createApp } from './app.js';
+import { config } from './config.js';
 
-const server = createApp().listen(config.port, () => {
-  console.log(`IronClad student booking API listening on http://localhost:${config.port}`)
-})
+const app = createApp();
 
-const shutdown = () => server.close(() => process.exit(0))
-process.on('SIGINT', shutdown)
-process.on('SIGTERM', shutdown)
+app.listen(config.port, () => {
+  console.log(`IronClad booking API listening on port ${config.port}`);
+});

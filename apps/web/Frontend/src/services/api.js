@@ -12,27 +12,45 @@ export class ApiRequestError extends Error {
 
 export async function apiRequest(path, options = {}) {
   if (!apiBaseUrl) {
-    throw new ApiRequestError('The booking service URL is not configured.', { code: 'API_URL_MISSING' })
+    throw new ApiRequestError('The IronClad API URL is not configured.', {
+      code: 'API_URL_MISSING',
+    })
   }
 
   let response
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...options,
-      headers: { Accept: 'application/json', ...options.headers },
+      headers: {
+        Accept: 'application/json',
+        'x-ironclad-test-session': 'admin-demo',
+        ...options.headers,
+      },
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error
-    throw new ApiRequestError('The booking service could not be reached.')
+    throw new ApiRequestError('The IronClad API could not be reached. Confirm that the backend is running.')
   }
 
-  const body = response.headers.get('content-type')?.includes('application/json') ? await response.json() : null
+  const contentType = response.headers.get('content-type') || ''
+  const payload = contentType.includes('application/json') ? await response.json() : null
   if (!response.ok) {
-    throw new ApiRequestError(body?.error?.message ?? 'The booking request could not be completed.', {
+    throw new ApiRequestError(payload?.error?.message || 'The IronClad API rejected the request.', {
       status: response.status,
-      code: body?.error?.code ?? 'REQUEST_FAILED',
-      details: body?.error?.details,
+      code: payload?.error?.code || 'REQUEST_FAILED',
+      details: payload?.error?.details,
     })
   }
-  return body
+  if (!payload) throw new ApiRequestError('The IronClad API returned an invalid response.', {
+    code: 'INVALID_RESPONSE',
+  })
+  return payload
+}
+
+export function jsonOptions(method, body) {
+  return {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }
 }
