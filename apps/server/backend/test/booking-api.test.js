@@ -11,6 +11,7 @@ const settings = Object.freeze({
   minSlotMinutes: 30,
   defaultStudentId: '2022-10892',
   demoWeekStart: '2026-10-19',
+  demoNow: '2026-10-20T14:15:00+08:00',
   calendar: Object.freeze({ term_label: 'Term 2', week_label: 'W6' }),
   operationalWindow: Object.freeze({ start: '07:00', end: '21:30' }),
   admin: Object.freeze({
@@ -152,15 +153,19 @@ test('status derivation and summary counts use the same active filters', async (
   });
 });
 
-test('venue details return the period timetable and unknown venues return 404', async () => {
+test('venue details return rich period schedule data for the student UI', async () => {
   await withApi(async (baseUrl) => {
     const details = await json(await fetch(
       `${baseUrl}/venues/Room%20101?date=2026-10-19&period=morning`,
     ));
-    assert.deepEqual(details.body.data.timetable, [
-      { start_time: '07:00', end_time: '11:00', state: 'occupied' },
-      { start_time: '11:00', end_time: '12:00', state: 'free_window' },
+    assert.equal(details.body.data.timetable.length, 1);
+    assert.equal(details.body.data.timetable[0].venue_id, 'Room 101');
+    assert.equal(details.body.data.timetable[0].entry_type, 'class');
+    assert.deepEqual(details.body.data.free_windows, [
+      { start_time: '11:00', end_time: '12:00', duration_hours: 1 },
     ]);
+    assert.deepEqual(details.body.meta.period_windows, [{ start: '07:00', end: '12:00' }]);
+    assert.equal(details.body.meta.current_time, '14:15');
     assert.equal((await json(await fetch(
       `${baseUrl}/venues/Room%20999?date=2026-10-19`,
     ))).status, 404);
@@ -229,6 +234,8 @@ test('reservation config returns the placeholder student and approval rules', as
     assert.equal(result.status, 200);
     assert.equal(result.body.data.requester.full_name, 'Ashley Gabrielle C. Alcantara');
     assert.equal(result.body.data.requester.program_section, 'BSCS 3A');
+    assert.equal(result.body.data.requester.studentId, '2022-10892');
+    assert.equal(result.body.data.requester.name, 'Ashley Gabrielle C. Alcantara');
     assert.match(result.body.data.approval_notice, /MIS Administrator/);
     assert.equal(result.body.data.purpose_max_length, 200);
     assert.equal(result.body.data.minimum_slot_minutes, 30);
@@ -377,13 +384,21 @@ test('reject releases a pending hold and transitions are validated', async () =>
   });
 });
 
-test('date options contain the seven resettable Demo week dates', async () => {
+test('booking setup exposes selectable Demo week dates, notices, and a default date', async () => {
   await withApi(async (baseUrl) => {
     const result = await json(await fetch(`${baseUrl}/dates/options`));
     assert.deepEqual(
       result.body.data.map((option) => option.date),
-      ['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'],
+      ['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'],
     );
     assert.ok(result.body.data.every((option) => option.dataset_label === 'Demo week'));
+    assert.equal(result.body.meta.default_date, '2026-10-20');
+
+    const notices = await json(await fetch(`${baseUrl}/booking/notices`));
+    assert.equal(notices.status, 200);
+    assert.equal(notices.body.data[0].notice_id, 'NOTICE-001');
+
+    const health = await json(await fetch(`${baseUrl}/health`));
+    assert.deepEqual(health.body, { status: 'ok', service: 'ironclad-booking' });
   });
 });

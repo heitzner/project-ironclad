@@ -267,6 +267,15 @@ export function createDemoData(demoWeekStart) {
       is_demo: true,
       dataset_label: 'Demo week',
     },
+    notices: [{
+      notice_id: 'NOTICE-001',
+      title: 'CSD Fair Badminton Tryout',
+      body: 'The Social Hall is currently occupied for tryouts until 3:00 PM. Please route activities to available vacant rooms.',
+      image_key: 'badminton_tryout',
+      guidelines_available: false,
+      is_demo: true,
+      dataset_label: 'Demo week',
+    }],
     dateOptions: Array.from({ length: 7 }, (_, day) => addDays(demoWeekStart, day)),
   };
 }

@@ -14,6 +14,7 @@ export class InMemoryBookingRepository {
     adminSession,
     decisionLogs,
     calendar,
+    notices = [],
     dateOptions,
   }) {
     this.venues = structuredClone(venues);
@@ -26,6 +27,7 @@ export class InMemoryBookingRepository {
     this.adminSession = structuredClone(adminSession);
     this.decisionLogs = structuredClone(decisionLogs);
     this.calendar = structuredClone(calendar);
+    this.notices = structuredClone(notices);
     this.dateOptions = [...dateOptions];
     this.nextReservationNumber = this.reservations.length + 1;
     this.nextEventNumber = this.events.length + 1;
@@ -160,6 +162,10 @@ export class InMemoryBookingRepository {
 
   getCalendar() {
     return structuredClone(this.calendar);
+  }
+
+  listNotices() {
+    return structuredClone(this.notices);
   }
 
   listDateOptions() {

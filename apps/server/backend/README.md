@@ -18,6 +18,8 @@ Monday unless `DEMO_WEEK_START` is supplied.
 
 ## Endpoints
 
+- `GET /health`
+- `GET /booking/notices`
 - `GET /venues?date=YYYY-MM-DD&period=all_day|morning|evening&floor=1|2|3|4&q=text`
 - `GET /venues/:roomCode?date=YYYY-MM-DD&period=all_day|morning|evening`
 - `GET /venues/:roomCode/occupancy?date=YYYY-MM-DD&at_time=HH:mm`

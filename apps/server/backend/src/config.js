@@ -78,6 +78,14 @@ if (!['connected', 'not_connected'].includes(adminConnectionState)) {
 const corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS
   || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',').map((origin) => origin.trim()).filter(Boolean);
+const demoWeekStart = configuredDemoWeekStart();
+const defaultDemoDate = new Date(`${demoWeekStart}T00:00:00Z`);
+defaultDemoDate.setUTCDate(defaultDemoDate.getUTCDate() + 1);
+const demoNow = process.env.DEMO_NOW
+  || `${defaultDemoDate.toISOString().slice(0, 10)}T14:15:00+08:00`;
+if (!Number.isFinite(Date.parse(demoNow))) {
+  throw new Error('DEMO_NOW must be a valid ISO datetime');
+}
 
 export const config = Object.freeze({
   port: Number(process.env.PORT || 3000),
@@ -99,7 +107,8 @@ export const config = Object.freeze({
     requestLimitMax: adminRequestLimitMax,
     decisionReasonMaxLength,
   }),
-  demoWeekStart: configuredDemoWeekStart(),
+  demoWeekStart,
+  demoNow,
   calendar: Object.freeze({ term_label: 'Term 2', week_label: 'W6' }),
   operationalWindow: Object.freeze(operationalWindow),
   periods: Object.freeze({

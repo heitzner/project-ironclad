@@ -1,5 +1,4 @@
 import {
-  buildTimetable,
   deriveStatus,
   findCurrentEntry,
   freeWindows,
@@ -38,18 +37,42 @@ function reservationAsScheduleEntry(reservation) {
   };
 }
 
+function periodFreeWindows(entries, windows) {
+  return windows.flatMap((window) => freeWindows(entries, window));
+}
+
+function referenceClock(settings) {
+  if (settings.demoNow) {
+    return {
+      date: settings.demoNow.slice(0, 10),
+      time: settings.demoNow.slice(11, 16),
+    };
+  }
+  const date = new Date(`${settings.demoWeekStart}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return { date: date.toISOString().slice(0, 10), time: '14:15' };
+}
+
 function listItem(venue, entries, windows) {
   const status = deriveStatus(venue, entries, windows);
+  const availableWindows = venue.is_details_available
+    ? periodFreeWindows(entries, windows)
+    : [];
   return {
     room_code: venue.room_code,
     name: venue.name,
     floor: venue.floor,
     location_label: venue.location_label,
     capacity: venue.capacity,
+    equipment: venue.equipment,
     utilization_percent: utilizationPercent(venue, entries, windows),
     status_label: status.status_label,
     status: status.status,
+    status_override: venue.status_override,
     is_details_available: venue.is_details_available,
+    next_free_window: availableWindows[0] || null,
+    is_demo: venue.is_demo,
+    dataset_label: venue.dataset_label,
   };
 }
 
@@ -145,6 +168,8 @@ export class BookingService {
         floor_unavailable_notice: allVenues.some(
           (venue) => venue.floor === 4 && !venue.is_details_available,
         ),
+        dataset_label: 'Demo week',
+        period_windows: windows,
       },
     };
   }
@@ -155,6 +180,16 @@ export class BookingService {
     const entries = this.effectiveEntries(venue.room_code, date);
     const windows = this.settings.periods[period];
     const status = deriveStatus(venue, entries, windows);
+    const clock = referenceClock(this.settings);
+    const currentEntry = date === clock.date ? findCurrentEntry(entries, clock.time) : null;
+    const timetable = venue.is_details_available
+      ? entries.filter((entry) => isBusy(entry) && windows.some(
+        (window) => overlaps(entry, window.start, window.end),
+      ))
+      : [];
+    const availableWindows = venue.is_details_available
+      ? periodFreeWindows(entries, windows)
+      : [];
     return {
       data: {
         room_code: venue.room_code,
@@ -170,10 +205,18 @@ export class BookingService {
         utilization_percent: utilizationPercent(venue, entries, windows),
         status: status.status,
         status_label: status.status_label,
-        timetable: venue.is_details_available ? buildTimetable(entries, windows) : [],
-        current_occupancy: status.status,
+        timetable,
+        free_windows: availableWindows,
+        next_free_window: availableWindows[0] || null,
+        current_occupancy: currentEntry && isBusy(currentEntry) ? currentEntry : null,
       },
-      meta: { date, period },
+      meta: {
+        date,
+        period,
+        period_windows: windows,
+        current_time: clock.time,
+        time_zone: this.settings.timeZone,
+      },
     };
   }
 
@@ -247,6 +290,10 @@ export class BookingService {
     return {
       data: {
         requester: {
+          id: student.student_id,
+          name: student.full_name,
+          studentId: student.student_id,
+          program: student.program_section,
           full_name: student.full_name,
           student_id: student.student_id,
           program_section: student.program_section,
@@ -259,11 +306,21 @@ export class BookingService {
   }
 
   getDateOptions() {
+    const clock = referenceClock(this.settings);
     return {
-      data: this.repository.listDateOptions().map((date) => ({
-        date,
-        dataset_label: 'Demo week',
-      })),
+      data: this.repository.listDateOptions()
+        .filter((date) => date >= clock.date)
+        .map((date) => ({
+          date,
+          dataset_label: 'Demo week',
+        })),
+      meta: { dataset_label: 'Demo week', default_date: clock.date },
+    };
+  }
+
+  getNotices() {
+    return {
+      data: this.repository.listNotices(),
       meta: { dataset_label: 'Demo week' },
     };
   }

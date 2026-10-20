@@ -51,6 +51,18 @@ export function createApp({ repository, settings = config } = {}) {
   });
   app.use(express.json({ limit: '32kb' }));
 
+  app.get('/health', (_request, response) => {
+    response.json({ status: 'ok', service: 'ironclad-booking' });
+  });
+
+  app.get('/booking/notices', (_request, response, next) => {
+    try {
+      response.json(bookingService.getNotices());
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.use('/admin', requireAdmin);
 
   app.get('/admin/session', (request, response, next) => {
