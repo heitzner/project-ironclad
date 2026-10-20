@@ -198,7 +198,7 @@ export function ArchiveTable({
                         onClick={() => download.run({ id: item.id })}
                         disabled={!item.hasAsset || !service.supports('getArchiveAsset') || isDownloading}
                         aria-label={`Download Asset for ${item.title}`}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 ${
+                        className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 ${
                           !isEven
                             ? 'bg-dark text-white hover:bg-deep'
                             : 'bg-soft/40 text-deep hover:bg-soft/60'

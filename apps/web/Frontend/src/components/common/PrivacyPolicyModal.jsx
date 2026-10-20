@@ -11,8 +11,8 @@ export function PrivacyPolicyModal({ isOpen, onClose, sections }) {
       showTopBar={true}
     >
       <div className="p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3.5">
+        <div className="flex flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-start">
+          <div className="flex min-w-0 items-start gap-3.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cardBg text-dark">
               <ShieldCheck className="h-6 w-6" aria-hidden="true" />
             </div>
@@ -33,7 +33,7 @@ export function PrivacyPolicyModal({ isOpen, onClose, sections }) {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:self-auto"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>

@@ -285,12 +285,12 @@ export function ProfileForm({ profile, onSaved }) {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <button
                   type="button"
                   onClick={handleDiscard}
                   disabled={!hasAnyChanges || saving}
-                  className="rounded-lg px-4 py-2 text-[13px] font-semibold text-textSecondary transition-colors duration-150 hover:bg-pageBg disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="min-h-11 rounded-lg px-4 py-2 text-[13px] font-semibold text-textSecondary transition-colors duration-150 hover:bg-pageBg disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   Discard
                 </button>
@@ -298,7 +298,7 @@ export function ProfileForm({ profile, onSaved }) {
                 <button
                   type="submit"
                   disabled={!hasAnyChanges || saving || mutation.blocked || !service.supports('updateProfile')}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   <Check className="h-4 w-4" aria-hidden="true" />
                   <span>{saving ? 'Saving...' : 'Save Changes'}</span>

@@ -71,13 +71,13 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
       className="p-0 border border-track/40 shadow-2xl"
     >
       <div className="relative p-6">
-        {/* Close X Button in top-right */}
+        {/* Keep the close control separate from notices and long event headings. */}
         <button
           type="button"
           onClick={handleClose}
           aria-label="Close modal"
           disabled={mutation.busy}
-          className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mb-2 ml-auto flex h-11 w-11 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -223,18 +223,18 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
               </label>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-track/40">
+              <div className="flex flex-col items-stretch justify-end gap-3 pt-3 border-t border-track/40 sm:flex-row sm:items-center">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-[13px] font-semibold text-textSecondary hover:text-textPrimary"
+                  className="min-h-11 shrink-0 rounded-control px-4 py-2 text-[13px] font-semibold text-textSecondary hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!canSubmit || mutation.busy || mutation.blocked || !individualAgreed}
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   <span>{mutation.busy ? 'Submitting…' : 'Confirm Registration'}</span>
@@ -378,18 +378,18 @@ function RegistrationForm({ isOpen, onClose, event, onSuccess }) {
               </label>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-track/40">
+              <div className="flex flex-col items-stretch justify-end gap-3 pt-3 border-t border-track/40 sm:flex-row sm:items-center">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-[13px] font-semibold text-textSecondary hover:text-textPrimary"
+                  className="min-h-11 shrink-0 rounded-control px-4 py-2 text-[13px] font-semibold text-textSecondary hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!canSubmit || mutation.busy || mutation.blocked || !teamAgreed || !teamName.trim()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   <span>{mutation.busy ? 'Submitting…' : 'Submit Team Bracket'}</span>

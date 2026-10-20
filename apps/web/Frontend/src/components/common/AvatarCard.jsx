@@ -6,11 +6,16 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
   const [error, setError] = useState(null)
   const fileInputRef = useRef(null)
   const readerRef = useRef(null)
-  useEffect(() => () => { readerRef.current?.abort() }, [])
+  const selectionRef = useRef(0)
+  useEffect(() => () => { selectionRef.current += 1; readerRef.current?.abort() }, [])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    e.target.value = ''
+    const selection = ++selectionRef.current
+    readerRef.current?.abort()
+    setLoading(false)
 
     // UX validation: JPG/PNG and <= 5MB
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg']
@@ -31,12 +36,27 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
     const reader = new FileReader()
     readerRef.current = reader
     reader.onload = (event) => {
+      if (selection !== selectionRef.current) return
       const dataUrl = event.target?.result
-      setLoading(false)
-      onAvatarChanged?.(dataUrl)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      // Check decoding before accepting a draft; a PNG extension alone is not an image.
+      const preview = new Image()
+      preview.onload = () => {
+        if (selection !== selectionRef.current) return
+        setLoading(false)
+        onAvatarChanged?.(dataUrl)
+      }
+      preview.onerror = () => {
+        if (selection !== selectionRef.current) return
+        setLoading(false)
+        setError('The image could not be displayed. Please choose another JPG or PNG.')
+      }
+      preview.src = dataUrl
     }
-    reader.onerror = () => { setLoading(false); setError('The image could not be read. Please choose it again.') }
+    reader.onerror = () => {
+      if (selection !== selectionRef.current) return
+      setLoading(false)
+      setError('The image could not be read. Please choose it again.')
+    }
     reader.readAsDataURL(file)
   }
 
@@ -53,6 +73,7 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
             <div className="flex h-full w-full items-center justify-center rounded-full bg-white overflow-hidden">
               {avatarUrl ? (
                 <img
+                  key={avatarUrl}
                   src={avatarUrl}
                   alt="Custom Profile Avatar"
                   onError={(e) => {
@@ -104,7 +125,7 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-soft px-4 py-2 text-[12px] font-semibold text-deep transition-colors duration-150 hover:bg-soft/80 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-soft px-4 py-2 text-[12px] font-semibold text-deep transition-colors duration-150 hover:bg-soft/80 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Upload className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{loading ? 'Processing...' : 'Upload New Image'}</span>
@@ -115,7 +136,7 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
                 type="button"
                 onClick={handleRemove}
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-surfaceGray px-3.5 py-2 text-[12px] font-semibold text-textSecondary transition-colors duration-150 hover:bg-surfaceGray/70 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-surfaceGray px-3.5 py-2 text-[12px] font-semibold text-textSecondary transition-colors duration-150 hover:bg-surfaceGray/70 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Remove</span>

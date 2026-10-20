@@ -12,29 +12,29 @@ function SearchBar({
 }) {
   return (
     <section className="rounded-panel bg-white p-2 shadow-card" aria-label="Search and filter">
-      <div className="flex min-h-[34px] items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center rounded-control bg-pageBg px-3 py-[6px]">
+      <div className="flex min-h-11 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-h-11 w-full min-w-0 flex-1 items-center rounded-control bg-pageBg px-3">
           <Search aria-hidden="true" className="mr-2 h-[15px] w-[15px] shrink-0 text-textSecondary" />
           <input
             type="search"
             value={query}
             onChange={(event) => onQueryChange?.(event.target.value)}
             placeholder={placeholder}
-            className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] font-normal leading-5 text-textPrimary placeholder:text-textMuted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-11 w-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] font-normal leading-5 text-textPrimary placeholder:text-textMuted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
           {query && (
             <button
               type="button"
               onClick={() => onQueryChange?.('')}
               aria-label="Clear search"
-              className="ml-2 flex h-5 w-5 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X aria-hidden="true" className="h-[9.33px] w-[9.33px]" />
             </button>
           )}
         </div>
 
-        <div className="relative h-8 w-48 shrink-0">
+        <div className="relative h-11 w-full shrink-0 sm:w-48">
           <select
             value={category}
             onChange={(event) => onCategoryChange?.(event.target.value)}
@@ -55,7 +55,7 @@ function SearchBar({
           type="button"
           onClick={onAction}
           disabled={!onAction}
-          className="flex shrink-0 items-center gap-1.5 rounded-control bg-primary px-5 py-2 text-[13px] font-semibold leading-[18px] tracking-[0.26px] text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex min-h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-control bg-primary px-5 py-2 text-[13px] font-semibold leading-[18px] tracking-[0.26px] text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {actionLabel}
           <ArrowRight aria-hidden="true" className="h-[11px] w-[10.67px]" />

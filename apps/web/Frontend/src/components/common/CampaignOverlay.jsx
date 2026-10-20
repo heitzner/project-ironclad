@@ -16,8 +16,8 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
       showTopBar={true}
     >
       <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <span className="inline-block rounded-full bg-cardBg px-2.5 py-0.5 text-[10px] font-semibold text-deep uppercase tracking-wider">
               {event.status || 'Campus Event'}
             </span>
@@ -30,7 +30,7 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-textMuted transition-colors duration-150 hover:bg-pageBg hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -39,14 +39,14 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
         <div className="mt-4 space-y-3 rounded-xl bg-selectBg/50 p-4 border border-track/40 text-[13px]">
           <div className="flex items-center gap-2.5 text-textPrimary">
             <MapPin className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-            <span className="font-semibold">Venue:</span>
-            <span>{event.venue}</span>
+            <span className="shrink-0 font-semibold">Venue:</span>
+            <span className="min-w-0 flex-1">{event.venue}</span>
           </div>
 
           <div className="flex items-center gap-2.5 text-textPrimary">
             <Clock className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-            <span className="font-semibold">Schedule:</span>
-            <span>{event.schedule}</span>
+            <span className="shrink-0 font-semibold">Schedule:</span>
+            <span className="min-w-0 flex-1">{event.schedule}</span>
           </div>
 
           <div className="flex items-center gap-2.5 text-textPrimary">
@@ -55,8 +55,8 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
             ) : (
               <ShieldCheck className="h-4 w-4 text-dark shrink-0" aria-hidden="true" />
             )}
-            <span className="font-semibold">Organizer:</span>
-            <span>{event.organizer}</span>
+            <span className="shrink-0 font-semibold">Organizer:</span>
+            <span className="min-w-0 flex-1">{event.organizer}</span>
           </div>
         </div>
 
@@ -66,11 +66,11 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
           </p>
         )}
 
-        <div className="mt-6 flex items-center justify-between gap-3 border-t border-track/60 pt-4">
+        <div className="mt-6 flex flex-col items-stretch justify-between gap-3 border-t border-track/60 pt-4 sm:flex-row sm:items-center">
           <Link
             to="/booking"
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-primary px-4 py-2 text-[13px] font-semibold text-primary transition-colors duration-150 hover:bg-cardBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-primary px-4 py-2 text-[13px] font-semibold text-primary transition-colors duration-150 hover:bg-cardBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Calendar className="h-4 w-4" aria-hidden="true" />
             <span>Go to Venue Booking</span>
@@ -79,7 +79,7 @@ export function CampaignOverlay({ isOpen, onClose, event }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-primary px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-11 rounded-xl bg-primary px-5 py-2 text-[13px] font-semibold text-white shadow-card transition-colors duration-150 hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Close
           </button>
