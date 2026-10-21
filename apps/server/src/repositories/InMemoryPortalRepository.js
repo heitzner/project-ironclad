@@ -42,6 +42,16 @@ export class InMemoryPortalRepository {
   deleteSession(id) { return this.#sessions.delete(id) }
   createChallenge(challenge) { this.#challenges.set(challenge.id, clone(challenge)); return clone(challenge) }
   findChallenge(id) { return clone(this.#challenges.get(id) || null) }
+  findRecentChallenge({ email, purpose, accountId, since }) {
+    return clone([...this.#challenges.values()].find(challenge => challenge.email === email
+      && challenge.purpose === purpose && challenge.accountId === accountId && challenge.createdAt >= since) || null)
+  }
+  recordChallengeAttempt(id) {
+    const challenge = this.#challenges.get(id)
+    if (!challenge) return null
+    challenge.attempts = (challenge.attempts || 0) + 1
+    return clone(challenge)
+  }
   consumeChallenge(id) { const value = this.findChallenge(id); this.#challenges.delete(id); return value }
   createReceipt(receipt) { this.#receipts.set(receipt.id, clone(receipt)); return clone(receipt) }
   consumeReceipt(id) { const value = clone(this.#receipts.get(id) || null); this.#receipts.delete(id); return value }

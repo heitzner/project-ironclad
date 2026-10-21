@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 import { config } from '../config.js'
 import { HttpError } from '../http/errors.js'
 import { signJwt, verifyJwt } from '../security/jwt.js'
@@ -14,10 +14,11 @@ const required = (value, label, max = 500) => {
 }
 
 export class AuthService {
-  constructor(repository, { clock = () => new Date(), jwtSecret = config.jwtSecret } = {}) {
+  constructor(repository, { clock = () => new Date(), jwtSecret = config.jwtSecret, emailService = null } = {}) {
     this.repository = repository
     this.clock = clock
     this.jwtSecret = jwtSecret
+    this.emailService = emailService
   }
 
   currentUser(account) {
@@ -70,19 +71,36 @@ export class AuthService {
 
   signOut(claims) { this.repository.deleteSession(claims.jti); return { signedOut: true } }
 
-  requestVerification({ email, purpose }, actor = null) {
+  async requestVerification({ email, purpose }, actor = null) {
     const cleanEmail = required(email, 'a valid email address', 254).toLowerCase()
     if (!emailPattern.test(cleanEmail) || !allowedPurposes.has(purpose)) throw new HttpError(422, 'VALIDATION_ERROR', 'Enter a valid verification request')
     if (purpose !== 'signup' && !actor) throw new HttpError(401, 'AUTHENTICATION_REQUIRED', 'Sign in to verify this change')
-    const challenge = { id: randomUUID(), email: cleanEmail, purpose, accountId: actor?.id || null, code: '123456', expiresAt: this.clock().getTime() + config.otpTtlSeconds * 1000 }
+    if (purpose === 'password-change' && cleanEmail !== actor?.email.toLowerCase()) throw new HttpError(422, 'INVALID_EMAIL', 'Verify the school email currently attached to your account')
+    const now = this.clock().getTime()
+    if (this.repository.findRecentChallenge({ email: cleanEmail, purpose, accountId: actor?.id || null, since: now - config.otpResendSeconds * 1000 })) {
+      throw new HttpError(429, 'VERIFICATION_RATE_LIMITED', `Wait ${config.otpResendSeconds} seconds before requesting another code`)
+    }
+    const deliveryEnabled = this.emailService?.deliveryEnabled === true
+    const code = deliveryEnabled ? String(randomInt(100000, 1000000)) : '123456'
+    const challenge = { id: randomUUID(), email: cleanEmail, purpose, accountId: actor?.id || null, code, attempts: 0, createdAt: now, expiresAt: now + config.otpTtlSeconds * 1000 }
+    try {
+      await this.emailService?.sendVerificationCode({ email: cleanEmail, purpose, code, expiresInMinutes: Math.ceil(config.otpTtlSeconds / 60) })
+    } catch {
+      throw new HttpError(503, 'EMAIL_DELIVERY_FAILED', 'The verification email could not be sent. Please try again')
+    }
     this.repository.createChallenge(challenge)
-    return { id: challenge.id, sent: true, expiresInSeconds: config.otpTtlSeconds, mockCode: config.production ? undefined : '123456' }
+    return { id: challenge.id, sent: true, expiresInSeconds: config.otpTtlSeconds, ...(!deliveryEnabled && !config.production ? { mockCode: '123456' } : {}) }
   }
 
   verifyEmail({ challengeId, code, email, purpose }, actor = null) {
     const challenge = this.repository.findChallenge(challengeId)
-    if (!challenge || challenge.expiresAt <= this.clock().getTime()) throw new HttpError(422, 'VERIFICATION_EXPIRED', 'This verification code is invalid or expired')
+    if (!challenge || challenge.expiresAt <= this.clock().getTime()) {
+      if (challenge) this.repository.consumeChallenge(challengeId)
+      throw new HttpError(422, 'VERIFICATION_EXPIRED', 'This verification code is invalid or expired')
+    }
     if (challenge.code !== String(code) || challenge.email !== String(email).trim().toLowerCase() || challenge.purpose !== purpose || challenge.accountId !== (actor?.id || null)) {
+      const attempted = this.repository.recordChallengeAttempt(challengeId)
+      if (attempted?.attempts >= 5) this.repository.consumeChallenge(challengeId)
       throw new HttpError(422, 'INVALID_VERIFICATION', 'This verification code is invalid or expired')
     }
     this.repository.consumeChallenge(challengeId)

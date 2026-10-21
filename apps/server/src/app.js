@@ -3,7 +3,9 @@ import { config } from './config.js'
 import { HttpError, errorMiddleware } from './http/errors.js'
 import { requirePositions, requireRoles } from './http/access.js'
 import { InMemoryPortalRepository } from './repositories/InMemoryPortalRepository.js'
+import { createAuthRoutes } from './routes/authRoutes.js'
 import { AuthService } from './services/AuthService.js'
+import { createEmailVerificationService } from './services/emailVerificationService.js'
 import { PortalService } from './services/PortalService.js'
 
 const asyncRoute = handler => (request, response, next) => Promise.resolve(handler(request, response, next)).catch(next)
@@ -37,8 +39,9 @@ function archivePdf(records) {
   return Buffer.from(output)
 }
 
-export function createApp({ repository = new InMemoryPortalRepository(), authService, portalService } = {}) {
-  const auth = authService || new AuthService(repository)
+export function createApp({ repository = new InMemoryPortalRepository(), authService, portalService, emailService } = {}) {
+  const mail = emailService || createEmailVerificationService(config.email)
+  const auth = authService || new AuthService(repository, { emailService: mail })
   const portal = portalService || new PortalService(repository, auth)
   const app = express()
   app.disable('x-powered-by')
@@ -73,9 +76,10 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
   app.post('/api/auth/password-reset', asyncRoute((request, response) => response.json(auth.resetPassword(request.body || {}))))
   app.get('/api/auth/session', optionalAuth, (request, response) => response.json(request.identity ? auth.sessionPayload(request.identity.account) : { user: null, capabilities: {} }))
   app.post('/api/auth/sign-out', requiredAuth, (request, response) => response.json(auth.signOut(request.identity.claims)))
-  app.post('/api/auth/verifications', optionalAuth, asyncRoute((request, response) => response.status(201).json(auth.requestVerification(request.body || {}, request.identity?.account || null))))
+  app.post('/api/auth/verifications', optionalAuth, asyncRoute(async (request, response) => response.status(201).json(await auth.requestVerification(request.body || {}, request.identity?.account || null))))
   app.post('/api/auth/verifications/confirm', optionalAuth, asyncRoute((request, response) => response.json(auth.verifyEmail(request.body || {}, request.identity?.account || null))))
   app.post('/api/auth/password', requiredAuth, asyncRoute((request, response) => response.json(auth.changePassword(request.identity.account, request.body || {}))))
+  app.use('/api/auth', createAuthRoutes({ authService: auth, optionalAuth }))
 
   app.get('/api/portal/state', optionalAuth, (request, response) => response.json(portal.stateFor(request.identity?.account || null)))
   app.post('/api/portal/bookings', requiredAuth, asyncRoute((request, response) => response.status(201).json(portal.createBooking(request.identity.account, request.body || {}))))
@@ -109,5 +113,5 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
   if (!config.production) app.post('/api/test/reset', (_request, response) => response.json({ reset: true, accountCount: repository.reset().accounts.length }))
   app.use((request, _response, next) => next(new HttpError(404, 'ROUTE_NOT_FOUND', `Route does not exist: ${request.method} ${request.path}`)))
   app.use(errorMiddleware)
-  return { app, repository, authService: auth, portalService: portal }
+  return { app, repository, authService: auth, portalService: portal, emailService: mail }
 }

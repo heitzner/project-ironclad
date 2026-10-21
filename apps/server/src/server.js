@@ -1,5 +1,12 @@
-import { createApp } from './app.js'
-import { config } from './config.js'
+import { fileURLToPath } from 'node:url'
+import dotenv from 'dotenv'
+
+dotenv.config({ path: fileURLToPath(new URL('../.env', import.meta.url)), quiet: true })
+
+const [{ createApp }, { config }] = await Promise.all([
+  import('./app.js'),
+  import('./config.js'),
+])
 
 const { app } = createApp()
 const server = app.listen(config.port, () => {

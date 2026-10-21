@@ -12,7 +12,7 @@ The in-memory repository is the temporary source of truth. IDs are opaque string
 
 Returns `{ token, user, capabilities }`. The HS256 JWT contains only `sub`, `jti`, `iat`, and `exp`; current role and position are resolved from the repository on every request so access changes immediately.
 
-Verification uses `POST /api/auth/verifications` with `{ email, purpose }`, then `POST /api/auth/verifications/confirm` with `{ challengeId, code, email, purpose }`. Purposes are `signup`, `email-change`, and `password-change`. Confirmation returns `{ verified: true, receipt }`.
+Verification uses `POST /api/auth/verifications` with `{ email, purpose }`, then `POST /api/auth/verifications/confirm` with `{ challengeId, code, email, purpose }`. Purposes are `signup`, `email-change`, and `password-change`. Codes expire, allow at most five attempts, and requests are throttled per email/purpose/account. Confirmation returns `{ verified: true, receipt }`; the one-time receipt is required by the corresponding account mutation.
 
 ## Repository entities
 

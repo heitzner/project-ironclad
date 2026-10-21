@@ -9,7 +9,13 @@ export const config = Object.freeze({
   jwtSecret: process.env.JWT_SECRET || 'ironclad-local-development-secret-change-me',
   jwtTtlSeconds: integer('JWT_TTL_SECONDS', 8 * 60 * 60),
   otpTtlSeconds: integer('OTP_TTL_SECONDS', 10 * 60),
+  otpResendSeconds: integer('OTP_RESEND_SECONDS', 60),
   production: process.env.NODE_ENV === 'production',
+  email: Object.freeze({
+    user: process.env.GMAIL_USER || '',
+    pass: process.env.GMAIL_APP_PASSWORD || '',
+    fromName: process.env.EMAIL_FROM_NAME || 'Project IronClad',
+  }),
   cors: Object.freeze({
     allowedOrigins: Object.freeze((process.env.CORS_ALLOWED_ORIGINS
       || 'http://localhost:5173,http://127.0.0.1:5173')

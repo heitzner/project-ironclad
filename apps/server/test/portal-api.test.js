@@ -6,7 +6,7 @@ let server
 let base
 
 before(() => new Promise(resolve => {
-  const created = createApp()
+  const created = createApp({ emailService: { deliveryEnabled: false, sendVerificationCode: async () => ({ delivered: false }) } })
   server = created.app.listen(0, '127.0.0.1', () => {
     base = `http://127.0.0.1:${server.address().port}/api`
     resolve()
