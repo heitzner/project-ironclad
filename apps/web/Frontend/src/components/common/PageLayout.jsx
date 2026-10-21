@@ -8,7 +8,7 @@ import { portalNavigation, usePortal } from './portal.context.js'
 const pageTitles = {
   '/': 'News Feed',
   '/news-feed': 'News Feed',
-  '/my-activity': 'My Applications & Registrations',
+  '/my-activity': 'My Activity',
   '/booking': 'Room booking',
   '/archive': 'Student archive',
   '/profile': 'Profile',
@@ -20,6 +20,8 @@ const pageTitles = {
   '/admin/dashboard': 'Admin dashboard',
   '/admin/bookings': 'Room bookings',
   '/admin/events': 'Campus events',
+  '/admin/people': 'People & Roles',
+  '/council/members': 'Council Members',
   '/admin/roles': 'Council roles',
   '/council': 'Council feed',
   '/council/apply': 'Council application',
@@ -38,9 +40,9 @@ function PageLayout({ children, role = 'public', user = null, fullWidth = false,
     document.title = `${pageTitles[route] || 'Page not found'} · IronClad`
   }, [pathname])
   const shared = portal ? {
-    role: auth.user?.role ?? 'public',
+    role: portal.authActions?.displayUser?.(auth.user)?.role ?? auth.user?.role ?? 'public',
     user: auth.status === 'authenticated' ? portal.authActions?.displayUser?.(auth.user) ?? auth.user : null,
-    navigationLinks: portalNavigation(auth), homeTo: '/',
+    navigationLinks: portalNavigation({ ...auth, user: portal.authActions?.displayUser?.(auth.user) ?? auth.user }), homeTo: '/news-feed',
     onSignOut: auth.status === 'authenticated' && portal.authActions?.signOut ? async () => {
       const result = await portal.authActions.signOut()
       if (result?.signedOut === true && auth.refetch) await auth.refetch()

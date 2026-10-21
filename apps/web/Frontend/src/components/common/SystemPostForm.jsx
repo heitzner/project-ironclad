@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { postKinds, programs } from '../../data/frontend-system.js'
+import { ThemedSelect, DateTimeField } from './ThemedControls.jsx'
 import SystemDialog from './SystemDialog.jsx'
 import { inputClass, primaryButton, secondaryButton } from './system-ui.js'
 
@@ -20,18 +21,18 @@ export default function SystemPostForm({ store, user, onClose }) {
         onClose()
       } catch (failure) { setError(failure.message) } finally { guard.current = false }
     }}>
-      <label className="block text-sm font-semibold">Post type<select value={kind} onChange={event => { setKind(event.target.value); setError('') }} className={`${inputClass} mt-1`}>{Object.entries(postKinds).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="block text-sm font-semibold">Post type<ThemedSelect label="Post type" value={kind} onChange={value => { setKind(value); setError('') }} options={Object.entries(postKinds).map(([value, label]) => ({ value, label }))} className="mt-1" /></label>
       {field('Title', 'title', { maxLength: 120 })}
       <label className="block text-sm font-semibold">Announcement / instructions<textarea name="description" required maxLength={3000} rows={4} className={`${inputClass} mt-1 font-normal`} /></label>
       {field('Venue / location', 'venue', { maxLength: 120 })}
-      <div className="grid gap-3 sm:grid-cols-2">{field(kind === 'announcement' ? 'Scheduled time (Manila)' : 'Registration closes / event starts (Manila)', 'startsAt', { type: 'datetime-local' })}{field('End time (Manila)', 'endsAt', { type: 'datetime-local' })}</div>
+      <div className="grid gap-3 sm:grid-cols-2"><DateTimeField label={kind === 'announcement' ? 'Scheduled date (Manila)' : 'Registration closes / event starts (Manila)'} name="startsAt" /><DateTimeField label="End date (Manila)" name="endsAt" /></div>
       {kind !== 'announcement' && field(kind === 'council' ? 'Application capacity' : registrationKind === 'team' ? 'Team capacity' : 'Participant capacity', 'capacity', { type: 'number', min: 1, max: 10000, defaultValue: 40 })}
       {kind === 'event' && <>
-        <label className="block text-sm font-semibold">Registration format<select value={registrationKind} onChange={event => setRegistrationKind(event.target.value)} className={`${inputClass} mt-1`}><option value="individual">Individual</option><option value="team">Team</option></select></label>
+        <label className="block text-sm font-semibold">Registration format<ThemedSelect label="Registration format" value={registrationKind} onChange={setRegistrationKind} options={[{ value: 'individual', label: 'Individual' }, { value: 'team', label: 'Team' }]} className="mt-1" /></label>
         {registrationKind === 'team' ? field('Players per team (including captain)', 'teamSize', { type: 'number', min: 2, max: 20, defaultValue: 5 }) : field('Categories (separate with commas)', 'categories', { required: false, placeholder: 'Singles, Doubles' })}
       </>}
       {kind === 'council' && <>
-        <label className="block text-sm font-semibold">Council program<select name="program" required className={`${inputClass} mt-1`}>{programs.map(program => <option key={program}>{program}</option>)}</select></label>
+        <label className="block text-sm font-semibold">Council program<ThemedSelect label="Council program" name="program" options={programs.map(program => ({ value: program, label: program }))} className="mt-1" /></label>
         <label className="block text-sm font-semibold">Application questions (one per line)<textarea name="questions" required rows={4} defaultValue={'Why do you want to join the council?\nWhat skills or experience would you bring?'} className={`${inputClass} mt-1 font-normal`} /></label>
       </>}
       <p className="text-xs leading-5 text-textSecondary">Your post and its attached form will appear in the News Feed and the matching filter for every account.</p>

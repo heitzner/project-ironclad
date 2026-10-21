@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ThemedSelect } from '../../components/common/ThemedControls.jsx'
 import ArchiveTable from '../../components/common/Archivetable.jsx'
 import Breadcrumb from '../../components/common/Breadcrumb.jsx'
 import PageLayout from '../../components/common/PageLayout.jsx'
@@ -32,6 +33,9 @@ export function ArchiveContent({ resource: archive }) {
   const [academicYear, setAcademicYear] = useState('')
   const [semester, setSemester] = useState('')
   const [venueId, setVenueId] = useState('')
+  const [selectedFormat, setSelectedFormat] = useState('pdf')
+  const formats = archive.data?.formats || ['csv']
+  const format = formats.includes(selectedFormat) ? selectedFormat : formats[0]
   const [page, setPage] = useState(1)
   const exportAction = useStudentDownload(service.exportArchive)
 
@@ -44,7 +48,7 @@ export function ArchiveContent({ resource: archive }) {
   const viewState = resourceState(archive, records.length === 0)
 
   // The adapter supplies a complete scoped snapshot; all displayed filters apply together.
-  const criteria = { search, academicYear, semester, venueId }
+  const criteria = { search, academicYear, semester, venueId, format }
   const filteredRecords = filterArchive(records, criteria)
 
   return (
@@ -107,7 +111,7 @@ export function ArchiveContent({ resource: archive }) {
                 setPage(1)
               }}
               placeholder="Search archived event, campaign name, course, or permit"
-              className="min-h-11 w-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-textPrimary placeholder:text-textMuted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-11 w-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-textPrimary placeholder:text-textSecondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
             {search && (
               <button
@@ -175,6 +179,7 @@ export function ArchiveContent({ resource: archive }) {
             <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-textSecondary" />
           </div>
 
+          <ThemedSelect label="Archive export format" value={format} onChange={setSelectedFormat} options={formats.map(value => ({ value, label: value === 'pdf' ? 'PDF · branded report' : 'CSV · spreadsheet data' }))} className="lg:w-48" />
           {/* Batch Export Button */}
           <button
             type="button"
@@ -183,7 +188,7 @@ export function ArchiveContent({ resource: archive }) {
             className="flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-control bg-soft px-4 text-[12px] font-semibold text-deep shadow-sm transition-colors duration-150 hover:bg-soft/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer lg:w-auto"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{exportAction.busy ? 'Exporting…' : 'Batch Export'}</span>
+            <span>{exportAction.busy ? 'Exporting…' : `Export ${format?.toUpperCase()}`}</span>
           </button>
         </div>
       </section>
@@ -195,6 +200,7 @@ export function ArchiveContent({ resource: archive }) {
       )}
       {!service.supports('exportArchive') && <p className="text-xs text-textSecondary">Archive export is not connected yet.</p>}
 
+      <p className="text-xs leading-5 text-textSecondary">PDF includes the IronClad logo and campus theme. CSV includes a Source column identifying IronClad; CSV files support text data rather than visual branding.</p>
       {/* Archive Table */}
       {viewState ? (
         <ViewState
@@ -204,6 +210,7 @@ export function ArchiveContent({ resource: archive }) {
         />
       ) : (
         <ArchiveTable
+          format={format}
           items={filteredRecords}
           total={filteredRecords.length}
           page={page}

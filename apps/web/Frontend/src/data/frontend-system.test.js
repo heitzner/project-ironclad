@@ -163,7 +163,7 @@ test('profile is scoped to account, and survives another account’s activity', 
   const { store, options } = setup()
   assert.throws(() => store.saveProfile(student, { id: admin.id, email: '' }), /own profile/)
   assert.throws(() => store.saveProfile(student, { id: student.id, email: 'invalid' }), /valid email/)
-  store.saveProfile(student, { id: student.id, email: 'student@example.test', avatarUrl: '' })
+  store.saveProfile(student, { id: student.id, email: 'student@example.test', avatarUrl: '', emailVerificationReceipt: 'verified-fixture' })
   const other = createFrontendStore(options)
   other.submit(admin, 'badminton', individual)
   store.refresh()

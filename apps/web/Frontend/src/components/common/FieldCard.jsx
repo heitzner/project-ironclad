@@ -11,6 +11,7 @@ export function FieldCard({
   type = 'text',
   placeholder = '',
   id,
+  required = false,
 }) {
   return (
     <div className="rounded-control bg-white p-2 shadow-card border border-track/30">
@@ -60,10 +61,11 @@ export function FieldCard({
           <input
             id={id}
             type={type}
+            required={required}
             value={value ?? ''}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            className="h-11 w-full rounded-lg border border-track bg-white px-3 pr-9 text-[15px] font-semibold text-textPrimary placeholder:text-textMuted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 w-full rounded-lg border border-track bg-white px-3 pr-9 text-[15px] font-semibold text-textPrimary placeholder:text-textSecondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <Pencil className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-textMuted" aria-hidden="true" />
         </div>

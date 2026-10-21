@@ -1,38 +1,7 @@
 import { useSyncExternalStore } from 'react'
+import { frontendAccounts as testAccounts } from '../../data/frontend-accounts.js'
 
 // Explicitly requested demo accounts. This browser-only adapter is not server authorization.
-const testAccounts = [
-  {
-    id: 'test-admin',
-    studentId: '20240001-A',
-    password: 'Admin@123',
-    name: 'Test Administrator',
-    role: 'admin',
-    course: 'BSCS',
-    yearLevel: '4',
-    section: 'A',
-  },
-  {
-    id: 'test-council',
-    studentId: '20240002-C',
-    password: 'Council@123',
-    name: 'Test Council Member',
-    role: 'council',
-    course: 'BSCS',
-    yearLevel: '3',
-    section: 'B',
-  },
-  {
-    id: 'test-student',
-    studentId: '20241200-C',
-    password: 'Student@123',
-    name: 'Test Student',
-    role: 'student',
-    course: 'BSCS',
-    yearLevel: '1',
-    section: 'C',
-  },
-]
 const userKey = 'ironclad-test-user-v1'
 const accountsKey = 'ironclad-test-accounts-v1'
 const listeners = new Set()
@@ -62,6 +31,7 @@ function publicUser(account) {
     studentId: account.studentId,
     name: account.name,
     role: account.role,
+    position: account.position,
     course: account.course,
     email: account.email,
     yearLevel: account.yearLevel,
@@ -147,7 +117,7 @@ export async function registerTestStudent({
   if ([...testAccounts, ...accounts].some((account) => account.studentId === username)) {
     throw new Error('An account with this student ID already exists.')
   }
-  if (accounts.some((account) => account.email === campusEmail))
+  if ([...testAccounts, ...accounts].some((account) => account.email === campusEmail))
     throw new Error('An account with this email already exists.')
   const salt = crypto.randomUUID()
   const account = {
@@ -169,10 +139,10 @@ export function signOutTestAccount() {
   setUser(null)
 }
 
-// Keep the three supplied accounts available with their original credentials.
+// Keep the supplied frontend accounts available with their documented credentials.
 export async function changeTestPassword(user, currentPassword, newPassword) {
   if (!user?.id) throw new Error('Sign in before changing your password.')
-  if (testAccounts.some(account => account.id === user.id)) throw new Error('The three supplied account credentials are fixed. Their passwords cannot be changed.')
+  if (testAccounts.some(account => account.id === user.id)) throw new Error('The supplied frontend account credentials are fixed. Their passwords cannot be changed.')
   if (newPassword.length < 8) throw new Error('Use at least 8 characters for your new password.')
   const accounts = readStored(accountsKey, [])
   const account = accounts.find(item => item.id === user.id)
@@ -180,3 +150,6 @@ export async function changeTestPassword(user, currentPassword, newPassword) {
   account.passwordHash = await digest(newPassword, account.salt)
   sessionStorage.setItem(accountsKey, JSON.stringify(accounts))
 }
+
+// Public directory metadata for the browser-local organization controls.
+export const getFrontendDirectory = () => [...testAccounts, ...readStored(accountsKey, [])].map(publicUser)

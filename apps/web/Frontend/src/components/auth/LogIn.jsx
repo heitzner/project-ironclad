@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
+import EmailVerification from '../common/EmailVerification.jsx'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
 
 // Shared controls and scoped animation styles.
@@ -323,10 +324,10 @@ function LoginForm({
       <p className="text-center text-xs text-textSecondary">
         {registration
           ? 'Register with your student details'
-          : 'Your username is your student number'}
+          : 'Use your student number to sign in'}
       </p>
       <label className="grid gap-1 text-xs font-semibold">
-        {registration ? 'Student ID' : 'Username'}
+        Student-ID
         <input
           ref={inputRef}
           name="studentId"
@@ -571,6 +572,7 @@ export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'si
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [view, setView] = useState('forms')
+  const [pendingRegistration, setPendingRegistration] = useState(null)
   const [registrationBlocked, setRegistrationBlocked] = useState(false)
   const submitGuard = useRef(false)
   const mounted = useRef(false)
@@ -594,7 +596,7 @@ export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'si
     const field =
       view === 'reset'
         ? resetField.current
-        : view === 'created'
+        : (view === 'created' || view === 'verify')
           ? confirmationHeading.current
           : signUp
             ? signUpField.current
@@ -643,7 +645,6 @@ export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'si
     if (submitGuard.current) return
     if (signUp && registrationBlocked) { setMessage('Registration is still unconfirmed. Check your account status before trying again.'); return }
     const fields = new FormData(event.currentTarget)
-    const form = event.currentTarget
     const handler = signUp ? handlers?.register : handlers?.signIn
     if (typeof handler !== 'function') { setMessage(`${signUp ? 'Registration' : 'Sign-in'} is not connected yet. Your information has not been submitted.`); return }
     if (signUp && fields.get('password') !== fields.get('confirmPassword')) { setMessage('Passwords must match.'); return }
@@ -652,13 +653,9 @@ export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'si
     setMessage('')
     try {
       if (signUp) {
-        const result = await handler(Object.fromEntries(fields))
-        if (result?.confirmed !== true || typeof result?.message !== 'string' || !result.message.trim()) throw new Error('Registration has not been confirmed. Check your account status before trying again.')
-        if (!mounted.current) return
-        form.reset()
-        setSignUp(false)
-        setView('created')
-        setMessage(result.message)
+        setPendingRegistration(Object.fromEntries(fields))
+        setView('verify')
+        return
       } else {
         const result = await handler({ studentId: fields.get('studentId'), password: fields.get('password'), remember: fields.get('remember') === 'on' })
         if (!mounted.current) return
@@ -705,7 +702,8 @@ export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'si
       className="ironclad-login m-auto max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-card border-0 bg-white p-0 text-textPrimary shadow-nav backdrop:bg-deep/60 backdrop:backdrop-blur-sm"
     >
       <style>{LOGIN_STYLES}</style>
-      {view !== 'forms' && (
+      {view === 'verify' && <div className="p-6 sm:p-10"><h2 ref={confirmationHeading} tabIndex={-1} id={`${id}-verify-title`} className="mb-5 text-xl font-bold">Complete your registration</h2><EmailVerification email={pendingRegistration?.email || ''} purpose="signup" onBusyChange={setBusy} request={handlers?.requestSignupVerification} verify={handlers?.verifySignupEmail} onBack={() => { setView('forms'); setSignUp(Boolean(pendingRegistration)) }} onVerified={async verificationReceipt => { const result = await handlers.register({ ...pendingRegistration, verificationReceipt }); if (result?.confirmed !== true) throw new Error('Account creation was not confirmed.'); setPendingRegistration(null); dialog.current?.querySelector('.ic-signup')?.reset() }} /></div>}
+      {view !== 'forms' && view !== 'verify' && (
         <AccountFeedback
           view={view}
           id={id}

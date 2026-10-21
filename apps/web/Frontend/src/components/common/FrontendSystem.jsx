@@ -6,36 +6,38 @@ import PortalProvider from './PortalProvider.jsx'
 import PageLayout from './PageLayout.jsx'
 import PortalState from './PortalState.jsx'
 import SystemFeed from './SystemFeed.jsx'
+import OrganizationManagement from './OrganizationManagement.jsx'
+import SystemDashboard from './SystemDashboard.jsx'
+import { canManageMembers, effectiveUser, positionLabel } from '../../data/organization.js'
 import { Facilities, MembershipReview, MyParticipation } from './SystemRequests.jsx'
 import StudentProvider from '../student/StudentProvider.jsx'
 import { createStudentService } from '../../services/student.service.js'
 import { filterArchive } from '../student/student.model.js'
-import { getTestUser, registerTestStudent, signInTestAccount, signOutTestAccount, changeTestPassword } from '../auth/test-auth.js'
+import { getTestUser, registerTestStudent, signInTestAccount, signOutTestAccount, getFrontendDirectory } from '../auth/test-auth.js'
 import { previewSession } from '../auth/frontend-preview.js'
 import { canManage, createFrontendStore } from '../../data/frontend-system.js'
+import { frontendAccounts } from '../../data/frontend-accounts.js'
 import BookingPage from '../../pages/student/BookingPage.jsx'
 import Profile from '../../pages/student/Profile.jsx'
+import { exportArchiveFile } from './archive-export.js'
 import Archive from '../../pages/student/Archive.jsx'
 import LoginModal from '../../pages/auth/LoginModal.jsx'
 import Support from '../../pages/public/Support.jsx'
 import AccountReset from '../../pages/auth/AccountReset.jsx'
 
-const fixedAccount = user => ['test-admin', 'test-council', 'test-student'].includes(user?.id)
+const fixedAccount = user => frontendAccounts.some(account => account.id === user?.id)
 const clock = () => new Date()
-const csvFile = (records, fileName) => ({ fileName, blob: new Blob([
-  ['Reference', 'Event', 'Organizer', 'Date', 'Venue', 'Course / Section'].join(',') + '\r\n' + records.map(record => [record.permitNo, record.title, record.organizer, record.concludedDate, record.venue.label, record.courseSection].map(value => `"${String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""')}"`).join(',')).join('\r\n'),
-], { type: 'text/csv;charset=utf-8' }) })
 
 export default function FrontendSystem() {
   const [store] = useState(() => {
     // A failing storage adapter reports a recoverable write error, never a false save.
     let storage
     try { storage = window.localStorage } catch { storage = { getItem: () => null, setItem: () => { throw new Error('Storage unavailable') } } }
-    return createFrontendStore({ storage })
+    return createFrontendStore({ storage, directory: getFrontendDirectory() })
   })
   const sessionFor = user => previewSession(user ? { ...user, ...store.getSnapshot().profiles[user.id] } : null)
   const [authActions] = useState(() => ({
-    displayUser: user => user ? { ...user, ...store.getSnapshot().profiles[user.id] } : null,
+    displayUser: user => store.user(user),
     signIn: async ({ studentId, password, remember }) => sessionFor(await signInTestAccount(studentId, password, remember)),
     register: async fields => {
       try { await registerTestStudent(fields); return { confirmed: true, message: 'Your account is ready. Sign in with your student ID and password.' } }
@@ -55,28 +57,27 @@ export default function FrontendSystem() {
 function SystemRoutes({ store }) {
   const auth = useAuth()
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot)
-  const user = auth.user
+  const user = useMemo(() => effectiveUser(auth.user, snapshot), [auth.user, snapshot])
   const student = useMemo(() => ({ service: createStudentService({ operations: {
     getProfile: async () => ({ profile: user ? {
-      id: user.id, studentId: user.studentId, fullName: user.name, programCode: user.course,
-      section: `${user.yearLevel}${user.section}`, position: { admin: 'Administrator', council: 'Council Member', student: 'Student' }[user.role],
+      id: user.id, version: store.getSnapshot().profiles[user.id]?.version || 0, studentId: user.studentId, fullName: getFrontendDirectory().find(person => person.id === user.id)?.name || user.name, programCode: user.course,
+      section: `${user.yearLevel}${user.section}`, position: positionLabel(user), displayName: store.getSnapshot().profiles[user.id]?.displayName || '', corrections: store.getSnapshot().profiles[user.id]?.corrections || [],
       email: store.getSnapshot().profiles[user.id]?.email || user.email || '', avatarUrl: store.getSnapshot().profiles[user.id]?.avatarUrl || '',
+      emailVerified: store.getSnapshot().profiles[user.id]?.emailVerified === true,
       lastSyncedAt: store.getSnapshot().profiles[user.id]?.updatedAt || 'No changes saved yet', sourceLabel: 'Campus account', passwordManaged: fixedAccount(user),
     } : null }),
     updateProfile: async input => {
-      if (input.newPassword) await changeTestPassword(user, input.currentPassword, input.newPassword)
-      const result = store.saveProfile(user, input)
-      return result
+      try { return store.saveProfile(user, input) } catch (failure) { failure.status = 422; throw failure }
     },
     getArchive: async () => {
       const records = store.getSnapshot().archive.map(record => ({ ...record, hasAsset: true, venue: { ...record.venue, type: 'room' } }))
-      return { records, summary: { totalArchived: records.length, coverageLabel: 'Campus event records' }, filters: { academicYears: [...new Set(records.map(r => r.academicYear))], semesters: [...new Set(records.map(r => r.semester))], venues: [...new Map(records.map(r => [r.venue.id, r.venue])).values()] }, policy: 'Download an event record or export the records matching your filters.' }
+      return { records, formats: ['pdf', 'csv'], summary: { totalArchived: records.length, coverageLabel: 'Campus event records' }, filters: { academicYears: [...new Set(records.map(r => r.academicYear))], semesters: [...new Set(records.map(r => r.semester))], venues: [...new Map(records.map(r => [r.venue.id, r.venue])).values()] }, policy: 'Download an event record or export the records matching your filters.' }
     },
-    exportArchive: async criteria => csvFile(filterArchive(store.getSnapshot().archive, criteria), 'campus-archive.csv'),
-    getArchiveAsset: async ({ id }) => {
+    exportArchive: async criteria => exportArchiveFile(filterArchive(store.getSnapshot().archive, criteria), 'ironclad-campus-archive', criteria.format),
+    getArchiveAsset: async ({ id, format }) => {
       const record = store.getSnapshot().archive.find(r => r.id === id)
       if (!record) throw new Error('This archive record could not be found. Refresh and try again.')
-      return csvFile([record], `${record.permitNo}.csv`)
+      return exportArchiveFile([record], record.permitNo, format)
     },
   } }) }), [user, store])
   const signedIn = content => auth.loading ? <PageLayout><PortalState state="loading" /></PageLayout> : user ? content : <PageLayout><PortalState state="signed-out" /></PageLayout>
@@ -93,11 +94,14 @@ function SystemRoutes({ store }) {
     <Route path="/admin" element={allowed(user?.role === 'admin', <Facilities store={store} snapshot={snapshot} user={user} />)} />
     <Route path="/admin/bookings" element={<Navigate to="/admin" replace />} />
     <Route path="/admin/events" element={allowed(user?.role === 'admin', <Navigate to="/news-feed?kind=event" replace />)} />
+    <Route path="/admin/dashboard" element={allowed(user?.role === 'admin', <SystemDashboard store={store} snapshot={snapshot} user={user} />)} />
+    <Route path="/admin/people" element={allowed(user?.role === 'admin' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={getFrontendDirectory()} />)} />
+    <Route path="/council/members" element={allowed(user?.role === 'council' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={getFrontendDirectory()} />)} />
     <Route path="/admin/roles" element={allowed(user?.role === 'admin', <Navigate to="/council/applications" replace />)} />
     <Route path="/booking" element={signedIn(user && <SystemBooking store={store} snapshot={snapshot} user={user} />)} />
     <Route path="/archive" element={signedIn(<Archive />)} />
     <Route path="/profile" element={signedIn(<Profile />)} />
-    <Route path="/my-activity" element={signedIn(user && <MyParticipation snapshot={snapshot} user={user} />)} />
+    <Route path="/my-activity" element={signedIn(user && <MyParticipation snapshot={snapshot} user={user} store={store} />)} />
     <Route path="/login" element={<LoginModal />} />
     <Route path="/account-reset" element={<AccountReset />} />
     <Route path="/support" element={<Support />} />

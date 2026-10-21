@@ -1,5 +1,6 @@
+import { organizationActions, organizationScope, topPositions } from './organization.js'
 import { mockRooms, createMockSchedules } from '../features/student-booking/booking.fixtures.js'
-import { validateRequest } from '../features/student-booking/booking.logic.js'
+import { addDays, validateRequest } from '../features/student-booking/booking.logic.js'
 
 export const systemStorageKey = 'ironclad-frontend-system-v1'
 export const programs = ['BSCS', 'BSIT', 'BSIS', 'BSEMC']
@@ -17,7 +18,7 @@ const overlaps = (a, b) => a.roomId === b.roomId && a.date === b.date && a.start
 const copy = value => JSON.parse(JSON.stringify(value))
 export const manilaDate = date => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
 
-export function initialSystem(now = new Date()) {
+export function initialSystem(now = new Date(), directory = []) {
   const future = days => new Date(now.getTime() + days * 86400000).toISOString().slice(0, 10)
   const post = (id, kind, title, description, days, extra = {}) => ({
     id, kind, title, description, startsAt: `${future(days)}T09:00:00+08:00`, endsAt: `${future(days)}T17:00:00+08:00`,
@@ -25,6 +26,7 @@ export function initialSystem(now = new Date()) {
   })
   return {
     version: 1, revision: 0,
+    members: { 'test-admin': { role: 'admin', position: 'President', scope: 'ACES', course: 'BSCS' }, 'test-council': { role: 'council', position: 'President', scope: 'BSCS', course: 'BSCS' }, ...Object.fromEntries(directory.filter(person => canManage(person)).map(person => [person.id, { role: person.role, position: person.position || 'Member', scope: organizationScope(person), course: person.course }])) }, handovers: [], organizationLog: [], closures: [],
     rooms: [...mockRooms, ...[
       ['401', 'Innovation & Collaboration Lab', 40], ['402', 'AI Research Laboratory', 30],
       ['403', 'Digital Arts Studio', 35], ['404', 'Project Presentation Room', 50],
@@ -54,16 +56,24 @@ export function initialSystem(now = new Date()) {
 
 // A single browser-local repository survives sign-out, account switching and reload.
 // Hosts supplying App integration props continue to use their own services instead.
-export function createFrontendStore({ storage, clock = () => new Date(), id = () => crypto.randomUUID() } = {}) {
+export function createFrontendStore({ storage, clock = () => new Date(), id = () => crypto.randomUUID(), directory = [] } = {}) {
   const listeners = new Set()
-  let state = initialSystem(clock())
+  let state = initialSystem(clock(), directory)
+  const initialMembers = state.members
   let storageError = null
   const read = () => {
     const raw = storage?.getItem(systemStorageKey)
     if (!raw) return
     const saved = JSON.parse(raw)
     if (saved.version !== 1 || !['rooms', 'posts', 'bookings', 'applications', 'registrations', 'archive'].every(key => Array.isArray(saved[key])) || !saved.profiles) throw new Error('Stored campus data could not be read.')
-    state = saved
+    const members = { ...(saved.members ?? initialMembers) }
+    // Add newly requested accounts without undoing appointments or accepted handovers.
+    for (const [key, member] of Object.entries(initialMembers)) {
+      if (Object.hasOwn(members, key)) continue
+      const occupied = topPositions.includes(member.position) && Object.values(members).some(existing => existing.role === member.role && existing.scope === member.scope && existing.position === member.position)
+      members[key] = { ...member, position: occupied ? 'Member' : member.position }
+    }
+    state = { ...saved, members, handovers: saved.handovers ?? [], organizationLog: saved.organizationLog ?? [], closures: saved.closures ?? [] }
   }
   try { read() } catch { storageError = 'Stored campus data could not be loaded. Check browser storage and reload before making changes.' }
   function mutate(action) {
@@ -85,7 +95,8 @@ export function createFrontendStore({ storage, clock = () => new Date(), id = ()
     refresh: () => { try { read(); storageError = null } catch { storageError = 'Stored campus data could not be loaded. Reload to try again.' } listeners.forEach(listener => listener()) },
     schedules(snapshot = state, excludeId, now = clock()) {
       const schedules = createMockSchedules(now)
-      return { ...schedules, entries: [...schedules.entries, ...snapshot.bookings.filter(b => b.id !== excludeId && ['pending', 'approved'].includes(b.status)).map(b => ({ ...b, type: 'reserved', title: `${b.status === 'pending' ? 'Pending request' : 'Reservation'} · ${b.purpose}`, host: b.requesterName }))] }
+      const closureEntries = (snapshot.closures || []).flatMap(closure => { const entries = []; for (let date = closure.startDate; date <= closure.endDate; date = addDays(date, 1)) entries.push({ roomId: closure.roomId, date, start: closure.start, end: closure.end, type: 'closure', title: 'Room closure', host: closure.reason }); return entries })
+      return { ...schedules, entries: [...schedules.entries, ...closureEntries, ...snapshot.bookings.filter(b => b.id !== excludeId && ['pending', 'approved'].includes(b.status)).map(b => ({ ...b, type: 'reserved', title: `${b.status === 'pending' ? 'Pending request' : 'Reservation'} · ${b.purpose}`, host: b.requesterName }))] }
     },
     book(user, input) {
       checkUser(user)
@@ -122,6 +133,28 @@ export function createFrontendStore({ storage, clock = () => new Date(), id = ()
         return room
       })
     },
+    scheduleClosure(user, input) {
+      checkAdmin(user)
+      return mutate(next => {
+        if (!next.rooms.some(r => r.id === input.roomId)) throw new Error('Room not found.')
+        if (!['interval', 'day', 'week', 'indefinite'].includes(input.mode)) throw new Error('Choose a closure duration.')
+        const reason = required(input.reason, 'the closure reason', 500)
+        const room = next.rooms.find(r => r.id === input.roomId)
+        if (input.mode === 'indefinite') { room.blocked = { label: 'Closed for booking', reason }; return room }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || !Number.isFinite(Date.parse(input.date)) || manilaDate(new Date(input.date + 'T12:00:00+08:00')) !== input.date || input.date < manilaDate(clock())) throw new Error('Choose a valid date from today onward.')
+        const start = input.mode === 'interval' ? Number(input.start) : 0
+        const end = input.mode === 'interval' ? Number(input.end) : 1440
+        if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end > 1440 || start >= end) throw new Error('The closure end must be after its start.')
+        const closure = { id: id(), roomId: input.roomId, startDate: input.date, endDate: input.mode === 'week' ? addDays(input.date, 6) : input.date, start, end, reason, mode: input.mode }
+        if (next.closures.some(c => c.roomId === input.roomId && c.startDate <= closure.endDate && closure.startDate <= c.endDate && start < c.end && c.start < end)) throw new Error('This closure overlaps an existing closure. Reopen the room or choose another period.')
+        next.closures.push(closure)
+        return closure
+      })
+    },
+    reopenRoom(user, roomId) {
+      checkAdmin(user)
+      return mutate(next => { const room = next.rooms.find(r => r.id === roomId); if (!room) throw new Error('Room not found.'); room.blocked = null; next.closures = next.closures.filter(c => c.roomId !== roomId); return room })
+    },
     publish(user, input) {
       checkManager(user)
       return mutate(next => {
@@ -149,7 +182,7 @@ export function createFrontendStore({ storage, clock = () => new Date(), id = ()
         if (!post || !['event', 'council'].includes(post.kind)) throw new Error('This form is no longer available.')
         if (Date.parse(post.startsAt) <= clock().getTime()) throw new Error('Registration for this item has closed.')
         const collection = post.kind === 'event' ? next.registrations : next.applications
-        if (collection.some(r => r.postId === post.id && r.userId === user.id)) throw new Error('You have already submitted this form. Check My Applications & Registrations.')
+        if (collection.some(r => r.postId === post.id && r.userId === user.id)) throw new Error('You have already submitted this form. Check My Activity.')
         if (collection.filter(r => r.postId === post.id && r.status !== 'declined').length >= post.capacity) throw new Error('All available slots have been filled.')
         if (post.kind === 'council' && (user.role !== 'student' || user.course !== post.program)) throw new Error(`This recruitment is open to ${post.program} students.`)
         const details = { contact: required(input.contact, 'a contact email', 200) }
@@ -187,10 +220,21 @@ export function createFrontendStore({ storage, clock = () => new Date(), id = ()
       return mutate(next => {
         if (input.id !== user.id) throw new Error('You can only update your own profile.')
         if (input.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) throw new Error('Enter a valid email address.')
-        next.profiles[user.id] = { email: input.email, avatarUrl: input.avatarUrl, updatedAt: clock().toISOString() }
+        const previous = next.profiles[user.id] || {}
+        if (input.correction) {
+          const correction = { id: id(), field: required(input.correction.field, 'the record to correct', 80), value: required(input.correction.value, 'the correct information', 120), reason: required(input.correction.reason, 'the correction reason', 500), status: 'pending', at: clock().toISOString() }
+          next.profiles[user.id] = { ...previous, version: (previous.version || 0) + 1, corrections: [...(previous.corrections || []), correction] }
+        } else {
+          const email = required(input.email, 'your school email address', 254)
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid school email address.')
+          const emailChanged = email.toLowerCase() !== String(previous.email || user.email || '').trim().toLowerCase()
+          if (emailChanged && !input.emailVerificationReceipt) throw new Error('Verify your new School Email before saving the change.')
+          next.profiles[user.id] = { ...previous, version: (previous.version || 0) + 1, email, emailVerified: emailChanged ? false : previous.emailVerified === true, avatarUrl: input.avatarUrl, displayName: required(input.displayName || user.name, 'a display name', 120), updatedAt: clock().toISOString() }
+        }
         return { confirmed: true, id: user.id }
       })
     },
   }
+  Object.assign(store, organizationActions({ mutate, state: () => state, clock, id }))
   return store
 }

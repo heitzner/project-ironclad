@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, CircleUserRound, Menu, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
-import viewerLogo from '../public/assets/viewer-logo.png'
+
 import { usePortal } from './portal.context.js'
 import { DecisionDialog } from './SystemDialog.jsx'
 import AdminClock from './AdminClock.jsx'
@@ -21,6 +21,7 @@ const roleLinks = {
 
 function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSignOut, navigationLinks, homeTo = '/' }) {
   const portal = usePortal()
+  useEffect(() => { let icon = document.querySelector('link[rel="icon"]'); if (!icon) { icon = document.createElement('link'); icon.rel = 'icon'; document.head.append(icon) }; icon.href = ironcladLogo; icon.type = 'image/png' }, [])
   const customNavigation = navigationLinks !== undefined
   // Council supplies its own session and capability-based links, including when signed out.
   const user = suppliedUser
@@ -51,7 +52,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
     >
       <div className="mx-auto flex h-full w-full items-center justify-between gap-2 px-3 sm:px-5 lg:px-6">
         <Link to={homeTo} className="flex min-h-11 shrink-0 items-center gap-2 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <img src={user ? ironcladLogo : viewerLogo} alt="IronClad" className="h-8 w-8 object-contain" />
+          <img src={ironcladLogo} alt="IronClad" className="h-8 w-8 object-contain" />
           <span className="text-[15px] font-bold leading-[22px] tracking-[-0.375px]">IronClad</span>
           <span className="ml-1 hidden rounded-full bg-navActive px-1 py-0.5 text-[10px] font-semibold uppercase leading-[14px] tracking-[0.5px] text-white sm:inline">
             {user ? 'Portal' : 'Viewer'}
@@ -138,7 +139,7 @@ function Navbar({ role: suppliedRole = 'public', user: suppliedUser = null, onSi
                 onClick={() => setMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-control px-3 py-2 text-sm hover:bg-pageBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                My Applications &amp; Registrations
+                My Activity
               </Link>
               <button
                 type="button"

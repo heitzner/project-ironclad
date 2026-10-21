@@ -39,6 +39,7 @@ function formatDate(isoString) {
 
 export function ArchiveTable({
   items = [],
+  format = 'csv',
   total = 0,
   page = 1,
   pageSize = 6,
@@ -195,9 +196,9 @@ export function ArchiveTable({
                     <td className="px-5 py-3.5 align-top text-right">
                       <button
                         type="button"
-                        onClick={() => download.run({ id: item.id })}
+                        onClick={() => download.run({ id: item.id, format })}
                         disabled={!item.hasAsset || !service.supports('getArchiveAsset') || isDownloading}
-                        aria-label={`Download Asset for ${item.title}`}
+                        aria-label={`Download ${format.toUpperCase()} for ${item.title}`}
                         className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 ${
                           !isEven
                             ? 'bg-dark text-white hover:bg-deep'
@@ -205,7 +206,7 @@ export function ArchiveTable({
                         }`}
                       >
                         <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>{isDownloading ? 'Downloading...' : 'Download Asset'}</span>
+                        <span>{isDownloading ? 'Downloading...' : `Download ${format.toUpperCase()}`}</span>
                       </button>
                     </td>
                   </tr>

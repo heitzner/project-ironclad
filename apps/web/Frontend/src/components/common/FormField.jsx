@@ -61,7 +61,7 @@ export function TextField({
               ? 'cursor-not-allowed bg-selectBg border-track/60 text-textPrimary'
               : error
               ? 'border-dark bg-white text-textPrimary focus:border-dark focus:outline-none focus:ring-2 focus:ring-ring'
-              : 'border-track bg-white text-textPrimary placeholder:text-textMuted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring'
+              : 'border-track bg-white text-textPrimary placeholder:text-textSecondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring'
           }`}
         />
 
@@ -132,7 +132,7 @@ export function PasswordField({
           } pr-12 ${
             error
               ? 'border-dark bg-white text-textPrimary focus:border-dark focus:outline-none focus:ring-2 focus:ring-ring'
-              : 'border-track bg-white text-textPrimary placeholder:text-textMuted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring'
+              : 'border-track bg-white text-textPrimary placeholder:text-textSecondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring'
           }`}
         />
 

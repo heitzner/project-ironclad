@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import BookingToolbar from '../../features/student-booking/BookingToolbar'
-import VenueCatalog from '../../features/student-booking/VenueCatalog'
-import VenueDetails from '../../features/student-booking/VenueDetails'
+import VenueCatalog from '../../components/common/BookingVenueCatalog.jsx'
+import BookingTimeRange from '../../components/common/BookingTimeRange.jsx'
+import { getSlotOptions, roomView, updateDraft } from '../../data/booking-selection.js'
+import VenueDetails from '../../components/common/BookingVenueDetails.jsx'
 import ReservationForm from '../../features/student-booking/ReservationForm'
 import BookingNotice from '../../features/student-booking/BookingNotice'
 import BookingRequestDialog from '../../features/student-booking/BookingRequestDialog'
-import { bookingDates, filterVenues, getSlotOptions, roomView, updateDraft, validateRequest } from '../../features/student-booking/booking.logic'
+import { bookingDates, filterVenues, validateRequest } from '../../features/student-booking/booking.logic'
 import '../../features/student-booking/booking.css'
 
 const systemClock = () => new Date()
 
 export default function BookingPage({ rooms, schedules, requester, clock = systemClock, onRequest, onOpenGuidelines }) {
   const [now, setNow] = useState(() => clock())
-  const [draft, setDraft] = useState(() => ({ date: bookingDates(clock())[0], shift: 'all', floor: 'all', search: '', statusFilter: 'all', roomId: null, purpose: '', slotId: '' }))
+  const [draft, setDraft] = useState(() => ({ date: bookingDates(clock())[0], shift: 'all', floor: 'all', search: '', statusFilter: 'all', roomId: null, purpose: '', slotId: '', from: '', to: '' }))
   const [requestState, setRequestState] = useState('idle')
   const [lastRequest, setLastRequest] = useState(null)
   const [error, setError] = useState(null)
@@ -37,8 +39,10 @@ export default function BookingPage({ rooms, schedules, requester, clock = syste
   const date = dates.includes(draft.date) ? draft.date : dates[0]
   const views = rooms.map(room => roomView(room, date, draft.shift, schedules, now))
   const visible = filterVenues(views, draft)
-  const selected = visible.find(view => view.room.id === draft.roomId)
-  const slots = selected ? getSlotOptions(selected.windows) : []
+  const selected = views.find(view => view.room.id === draft.roomId)
+  const presets = selected ? getSlotOptions(selected.windows) : []
+  const custom = draft.slotId === 'custom' && draft.from !== '' && draft.to !== '' && selected?.windows.some(w => Number(draft.from) >= w.start && Number(draft.to) <= w.end && Number(draft.to) > Number(draft.from))
+  const slots = custom ? [...presets, { id: 'custom', start: Number(draft.from), end: Number(draft.to), preset: true }] : presets
   const slotId = date === draft.date && slots.some(slot => slot.id === draft.slotId) ? draft.slotId : ''
   const counts = {
     available: views.filter(view => view.status === 'available').length,
@@ -61,7 +65,7 @@ export default function BookingPage({ rooms, schedules, requester, clock = syste
     const freshNow = clock()
     setNow(freshNow)
     const freshView = selected && roomView(selected.room, date, draft.shift, schedules, freshNow)
-    const slot = freshView && getSlotOptions(freshView.windows).find(item => item.id === slotId)
+    const slot = slotId === 'custom' ? { start: Number(draft.from), end: Number(draft.to) } : freshView && getSlotOptions(freshView.windows).find(item => item.id === slotId)
     const snapshot = Object.freeze({ roomId: selected?.room.id, date, shift: draft.shift, start: slot?.start, end: slot?.end, purpose: draft.purpose.trim(), requesterId: requester.id })
     const problem = validateRequest(snapshot, { rooms, schedules, now: freshNow })
     if (problem) {
@@ -95,13 +99,13 @@ export default function BookingPage({ rooms, schedules, requester, clock = syste
   function closeConfirmation() {
     setRequestState('idle')
     setLastRequest(null)
-    setDraft(previous => ({ ...previous, purpose: '', slotId: '' }))
+    setDraft(previous => ({ ...previous, purpose: '', slotId: '', from: '', to: '' }))
   }
 
   return <main className="student-booking" aria-labelledby="booking-title">
     <BookingToolbar dates={dates} date={date} shift={draft.shift} counts={counts} busy={busy} onChange={changeDraft} />
-    <div className="booking-workspace"><div className="booking-left-panel"><VenueCatalog floors={[...new Set(rooms.map(room => room.floor))]} views={visible} total={rooms.length} draft={draft} selectedId={selected?.room.id} busy={busy} onChange={changeDraft} onSelect={roomId => changeDraft({ roomId })} /><BookingNotice onOpenGuidelines={onOpenGuidelines} busy={busy} /></div>
-      <VenueDetails view={selected} date={date} shift={draft.shift} schedules={schedules} now={now}>{selected && <ReservationForm key={selected.room.id} requester={requester} view={selected} purpose={draft.purpose} slots={slots} slotId={slotId} error={error} busy={busy} formRef={formRef} onChange={changeDraft} onSubmit={submitRequest} />}</VenueDetails>
+    <div className="booking-workspace"><div className="booking-left-panel"><VenueCatalog floors={[...new Set(rooms.map(room => room.floor))]} views={visible} total={rooms.length} draft={draft} selectedId={selected?.room.id} busy={busy} onChange={changeDraft} onSelect={roomId => changeDraft({ roomId: draft.roomId === roomId ? null : roomId })} /><BookingNotice onOpenGuidelines={onOpenGuidelines} busy={busy} /></div>
+      <VenueDetails view={selected} date={date} shift={draft.shift} schedules={schedules} now={now}>{selected && <><BookingTimeRange view={selected} draft={draft} busy={busy} onChange={changeDraft} /><ReservationForm key={selected.room.id} requester={requester} view={selected} purpose={draft.purpose} slots={slots} slotId={slotId} error={error} busy={busy} formRef={formRef} onChange={changeDraft} onSubmit={submitRequest} /></>}</VenueDetails>
     </div>
     <BookingRequestDialog request={requestState === 'pending-confirmation' ? lastRequest : null} returnFocusRef={requestTriggerRef} onClose={closeConfirmation} />
   </main>

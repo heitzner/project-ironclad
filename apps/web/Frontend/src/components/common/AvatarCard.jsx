@@ -7,14 +7,15 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
   const fileInputRef = useRef(null)
   const readerRef = useRef(null)
   const selectionRef = useRef(0)
-  useEffect(() => () => { selectionRef.current += 1; readerRef.current?.abort() }, [])
+  useEffect(() => { readerRef.current = null; return () => { selectionRef.current += 1; readerRef.current?.abort(); readerRef.current = null } }, [])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
     const selection = ++selectionRef.current
-    readerRef.current?.abort()
+    if (readerRef.current?.readyState === FileReader.LOADING) readerRef.current.abort()
+    readerRef.current = null
     setLoading(false)
 
     // UX validation: JPG/PNG and <= 5MB
@@ -75,7 +76,7 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
                 <img
                   key={avatarUrl}
                   src={avatarUrl}
-                  alt="Custom Profile Avatar"
+                  alt="Profile Avatar"
                   onError={(e) => {
                     e.target.style.display = 'none'
                   }}
@@ -109,7 +110,7 @@ export function AvatarCard({ avatarUrl, onAvatarChanged }) {
         </div>
 
         <div className="flex-1 text-center sm:text-left">
-          <h2 className="text-[16px] font-bold text-textPrimary">Custom Profile Avatar</h2>
+          <h2 className="text-[16px] font-bold text-textPrimary">Profile Avatar</h2>
           <p className="mt-1 text-[12px] leading-5 text-textSecondary">
             Allowed formats: JPG, PNG (Max 5MB). Choose an image to preview it before saving your profile.
           </p>

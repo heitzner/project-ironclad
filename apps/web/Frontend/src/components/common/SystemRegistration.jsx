@@ -15,7 +15,7 @@ export default function SystemRegistration({ post, user, store, onClose }) {
       <p className="text-lg font-semibold text-dark">{post.title}</p>
       <p>{council ? 'Your application is pending review by the council or an administrator.' : 'You are registered. No approval is needed.'}</p>
       <p className="rounded-panel bg-cardBg p-4 break-all">Reference: <strong>{result.id}</strong></p>
-      <p>Track this in <strong>My Applications &amp; Registrations</strong> in your account menu.</p>
+      <p>Track this in <strong>My Activity</strong> in your account menu.</p>
       <button type="button" className={primaryButton} onClick={onClose}>Done</button>
     </div> : <form className="space-y-4" onSubmit={event => {
       event.preventDefault()

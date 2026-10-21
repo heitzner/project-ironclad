@@ -1,16 +1,17 @@
 import { useId, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import ModalShell from './ModalShell.jsx'
+import './task40.css'
 import { primaryButton, secondaryButton } from './system-ui.js'
 
 export default function SystemDialog({ title, onClose, children, wide = false, busy = false }) {
   const id = useId()
-  return <ModalShell isOpen onClose={onClose} titleId={id} busy={busy} maxWidth={wide ? 'max-w-3xl' : 'max-w-xl'} showTopBar>
+  return <ModalShell isOpen onClose={onClose} titleId={id} busy={busy} maxWidth={wide ? 'max-w-3xl' : 'max-w-xl'} className="!overflow-visible" showTopBar>
     <div className="flex items-start justify-between gap-4 border-b border-track p-5">
       <h2 id={id} className="text-xl font-bold">{title}</h2>
       <button type="button" aria-label="Close dialog" disabled={busy} onClick={onClose} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-cardBg focus-visible:ring-2 focus-visible:ring-primary"><X aria-hidden="true" /></button>
     </div>
-    <div className="p-5">{children}</div>
+    <div className="ic-scroll max-h-[calc(100svh-10rem)] overflow-y-auto rounded-b-[24px] p-5">{children}</div>
   </ModalShell>
 }
 
