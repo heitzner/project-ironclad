@@ -79,6 +79,23 @@ Event venues are validated and overlapping active events in the same venue retur
 The local Vite origin is allowed by `CORS_ALLOWED_ORIGINS` so browser reads and writes can include
 the configured admin test-session header.
 
+### Council Room Bookings
+
+Council requests use the same configurable test-session header with the seeded value
+`council-demo`. Council members can browse live venue/request information, create reservation
+requests, and write one endorsement per request. They cannot approve or reject reservations.
+
+- `GET /council/session`
+- `GET /council/venues`
+- `GET /council/venues/:roomCode/sidebar`
+- `GET /council/booking-requests`
+- `GET /council/booking-requests/:reservationId/sidebar`
+- `GET /council/notices`
+- `GET /council/notices/:noticeId/guidelines`
+- `GET /council/reservations/config`
+- `POST /council/reservations`
+- `POST /council/booking-requests/:reservationId/endorsements`
+
 The lock body contains `room_code`, `date`, `start_time`, `end_time`, `purpose`, and `student_id`.
 It creates a `pending_approval` hold rather than an immediate lock. Pending holds block overlapping
 requests and participate in utilization and status calculations. Approval changes a hold to a

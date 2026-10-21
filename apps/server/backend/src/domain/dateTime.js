@@ -49,24 +49,43 @@ export function formatTime12Hour(value) {
   return `${String(displayHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`;
 }
 
-export function currentTimeInZone(timeZone) {
+export function currentTimeInZone(timeZone, instant = new Date()) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).formatToParts(new Date());
+  }).formatToParts(instant);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.hour}:${values.minute}`;
 }
 
-export function currentDateInZone(timeZone) {
+export function currentDateInZone(timeZone, instant = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(new Date());
+  }).formatToParts(instant);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
+}
+
+export function displayClockInZone(timeZone, instant = new Date()) {
+  return {
+    display_time: new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(instant),
+    display_date: new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(instant),
+  };
 }

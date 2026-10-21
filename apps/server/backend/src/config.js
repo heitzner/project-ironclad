@@ -54,6 +54,9 @@ const minSlotMinutes = Number(process.env.BOOKING_MIN_SLOT_MINUTES || 30);
 const adminRequestLimit = Number(process.env.ADMIN_REQUEST_LIMIT || 20);
 const adminRequestLimitMax = Number(process.env.ADMIN_REQUEST_LIMIT_MAX || 100);
 const decisionReasonMaxLength = Number(process.env.ADMIN_DECISION_REASON_MAX_LENGTH || 500);
+const councilRequestLimit = Number(process.env.COUNCIL_REQUEST_LIMIT || 20);
+const councilRequestLimitMax = Number(process.env.COUNCIL_REQUEST_LIMIT_MAX || 100);
+const councilEndorsementMaxLength = Number(process.env.COUNCIL_ENDORSEMENT_MAX_LENGTH || 2000);
 if (!Number.isInteger(purposeMaxLength) || purposeMaxLength < 1) {
   throw new Error('BOOKING_PURPOSE_MAX_LENGTH must be a positive integer');
 }
@@ -69,10 +72,33 @@ if (!Number.isInteger(adminRequestLimitMax) || adminRequestLimitMax < adminReque
 if (!Number.isInteger(decisionReasonMaxLength) || decisionReasonMaxLength < 1) {
   throw new Error('ADMIN_DECISION_REASON_MAX_LENGTH must be a positive integer');
 }
+if (!Number.isInteger(councilRequestLimit) || councilRequestLimit < 1) {
+  throw new Error('COUNCIL_REQUEST_LIMIT must be a positive integer');
+}
+if (!Number.isInteger(councilRequestLimitMax) || councilRequestLimitMax < councilRequestLimit) {
+  throw new Error('COUNCIL_REQUEST_LIMIT_MAX must be at least COUNCIL_REQUEST_LIMIT');
+}
+if (!Number.isInteger(councilEndorsementMaxLength) || councilEndorsementMaxLength < 1) {
+  throw new Error('COUNCIL_ENDORSEMENT_MAX_LENGTH must be a positive integer');
+}
 
 const adminConnectionState = process.env.ADMIN_CONNECTION_STATE || 'connected';
 if (!['connected', 'not_connected'].includes(adminConnectionState)) {
   throw new Error('ADMIN_CONNECTION_STATE must be connected or not_connected');
+}
+const councilConnectionState = process.env.COUNCIL_CONNECTION_STATE || 'connected';
+if (!['connected', 'not_connected'].includes(councilConnectionState)) {
+  throw new Error('COUNCIL_CONNECTION_STATE must be connected or not_connected');
+}
+const councilVacantMaxPercent = Number(process.env.COUNCIL_VACANT_MAX_PERCENT || 25);
+const councilAllocatedMinPercent = Number(process.env.COUNCIL_ALLOCATED_MIN_PERCENT || 70);
+if (![councilVacantMaxPercent, councilAllocatedMinPercent]
+  .every((value) => Number.isFinite(value) && value >= 0 && value <= 100)) {
+  throw new Error('Council utilization thresholds must be between 0 and 100');
+}
+const councilClockIso = process.env.COUNCIL_CLOCK_ISO || null;
+if (councilClockIso && !Number.isFinite(Date.parse(councilClockIso))) {
+  throw new Error('COUNCIL_CLOCK_ISO must be a valid ISO datetime');
 }
 
 const corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS
@@ -106,6 +132,19 @@ export const config = Object.freeze({
     requestLimit: adminRequestLimit,
     requestLimitMax: adminRequestLimitMax,
     decisionReasonMaxLength,
+  }),
+  council: Object.freeze({
+    connectionState: councilConnectionState,
+    sessionHeader: process.env.COUNCIL_SESSION_HEADER || 'x-ironclad-test-session',
+    testSessionId: process.env.COUNCIL_TEST_SESSION_ID || 'council-demo',
+    nonCouncilSessionIds: Object.freeze(['admin-demo', 'student-demo']),
+    requestLimit: councilRequestLimit,
+    requestLimitMax: councilRequestLimitMax,
+    endorsementMaxLength: councilEndorsementMaxLength,
+    vacantMaxPercent: councilVacantMaxPercent,
+    allocatedMinPercent: councilAllocatedMinPercent,
+    examPrepEntryType: process.env.COUNCIL_EXAM_PREP_ENTRY_TYPE || 'exam_prep',
+    clockIso: councilClockIso,
   }),
   demoWeekStart,
   demoNow,

@@ -12,9 +12,11 @@ export class InMemoryBookingRepository {
     councilRoles = [],
     events = [],
     adminSession,
+    councilSession = null,
     decisionLogs,
     calendar,
     notices = [],
+    endorsements = [],
     dateOptions,
   }) {
     this.venues = structuredClone(venues);
@@ -25,12 +27,15 @@ export class InMemoryBookingRepository {
     this.councilRoles = structuredClone(councilRoles);
     this.events = structuredClone(events);
     this.adminSession = structuredClone(adminSession);
+    this.councilSession = structuredClone(councilSession);
     this.decisionLogs = structuredClone(decisionLogs);
     this.calendar = structuredClone(calendar);
     this.notices = structuredClone(notices);
+    this.endorsements = structuredClone(endorsements);
     this.dateOptions = [...dateOptions];
     this.nextReservationNumber = this.reservations.length + 1;
     this.nextEventNumber = this.events.length + 1;
+    this.nextEndorsementNumber = this.endorsements.length + 1;
   }
 
   listVenues() {
@@ -156,6 +161,22 @@ export class InMemoryBookingRepository {
     return null;
   }
 
+  resolveCouncilSession(sessionId, settings) {
+    if (sessionId === settings.testSessionId
+      && this.councilSession?.session_id === settings.testSessionId) {
+      return structuredClone(this.councilSession);
+    }
+    if (settings.nonCouncilSessionIds.includes(sessionId)) {
+      if (sessionId === this.adminSession.session_id) return structuredClone(this.adminSession);
+      return {
+        full_name: this.students[0]?.full_name || 'Test Student',
+        role: 'STUDENT',
+        session_id: sessionId,
+      };
+    }
+    return null;
+  }
+
   listDecisionLogs() {
     return structuredClone(this.decisionLogs);
   }
@@ -166,6 +187,45 @@ export class InMemoryBookingRepository {
 
   listNotices() {
     return structuredClone(this.notices);
+  }
+
+  listActiveNotices() {
+    return structuredClone(this.notices.filter((notice) => notice.is_active));
+  }
+
+  findNotice(noticeId) {
+    const notice = this.notices.find(
+      (candidate) => candidate.notice_id === noticeId && candidate.is_active,
+    );
+    return notice ? structuredClone(notice) : null;
+  }
+
+  findEndorsementByReservation(reservationId) {
+    const endorsement = this.endorsements.find(
+      (candidate) => candidate.reservation_id === reservationId,
+    );
+    return endorsement ? structuredClone(endorsement) : null;
+  }
+
+  createEndorsement({ reservationId, message, session, createdAt }) {
+    if (this.endorsements.some(
+      (candidate) => candidate.reservation_id === reservationId,
+    )) return null;
+    const endorsement = {
+      endorsement_id: `END-${String(this.nextEndorsementNumber).padStart(4, '0')}`,
+      reservation_id: reservationId,
+      message,
+      endorsed_by: {
+        full_name: session.full_name,
+        program_section: session.program_section,
+      },
+      created_at: createdAt,
+      is_demo: false,
+      dataset_label: null,
+    };
+    this.nextEndorsementNumber += 1;
+    this.endorsements.push(endorsement);
+    return structuredClone(endorsement);
   }
 
   listDateOptions() {
