@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "dev:frontend": "npm --prefix apps/web/Frontend run dev",
-    "dev:backend": "npm --prefix apps/server/backend run dev",
-    "test:backend": "npm --prefix apps/server/backend test",
+    "dev:backend": "npm --prefix apps/server run dev",
+    "test:backend": "npm --prefix apps/server test",
     "lint:frontend": "npm --prefix apps/web/Frontend run lint",
     "build:frontend": "npm --prefix apps/web/Frontend run build"
   },
