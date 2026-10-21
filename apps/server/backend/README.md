@@ -1,4 +1,9 @@
-# Room & Laboratory Booking API
+# Legacy Room & Laboratory Booking API
+
+> The active integrated API lives in `apps/server/src`. Running `npm start` or
+> `npm run dev` from this legacy directory intentionally starts that active API,
+> so older terminal setups cannot occupy port 3000 with incompatible routes.
+> The implementation below remains for compatibility tests.
 
 Express implementation for the IronClad portal and booking catalog.
 It has no database, ORM, cache, file persistence, or external timetable source. Venues, schedules,
