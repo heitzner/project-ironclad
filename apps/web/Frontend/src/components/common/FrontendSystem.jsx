@@ -13,10 +13,10 @@ import { Facilities, MembershipReview, MyParticipation } from './SystemRequests.
 import StudentProvider from '../student/StudentProvider.jsx'
 import { createStudentService } from '../../services/student.service.js'
 import { filterArchive } from '../student/student.model.js'
-import { getTestUser, registerTestStudent, signInTestAccount, signOutTestAccount, getFrontendDirectory } from '../auth/test-auth.js'
-import { previewSession } from '../auth/frontend-preview.js'
-import { canManage, createFrontendStore } from '../../data/frontend-system.js'
+import { canManage } from '../../data/frontend-system.js'
+import { createPortalApiStore } from '../../data/portal-api-store.js'
 import { frontendAccounts } from '../../data/frontend-accounts.js'
+import { changePortalPassword, loadPortalSession, registerPortal, requestPortalVerification, resetPortalPassword, signInPortal, signOutPortal, verifyPortalEmail } from '../../services/portal.js'
 import BookingPage from '../../pages/student/BookingPage.jsx'
 import Profile from '../../pages/student/Profile.jsx'
 import { exportArchiveFile } from './archive-export.js'
@@ -29,28 +29,34 @@ const fixedAccount = user => frontendAccounts.some(account => account.id === use
 const clock = () => new Date()
 
 export default function FrontendSystem() {
-  const [store] = useState(() => {
-    // A failing storage adapter reports a recoverable write error, never a false save.
-    let storage
-    try { storage = window.localStorage } catch { storage = { getItem: () => null, setItem: () => { throw new Error('Storage unavailable') } } }
-    return createFrontendStore({ storage, directory: getFrontendDirectory() })
-  })
-  const sessionFor = user => previewSession(user ? { ...user, ...store.getSnapshot().profiles[user.id] } : null)
+  const [store] = useState(createPortalApiStore)
   const [authActions] = useState(() => ({
     displayUser: user => store.user(user),
-    signIn: async ({ studentId, password, remember }) => sessionFor(await signInTestAccount(studentId, password, remember)),
-    register: async fields => {
-      try { await registerTestStudent(fields); return { confirmed: true, message: 'Your account is ready. Sign in with your student ID and password.' } }
-      catch (error) { error.status = 422; throw error }
+    signIn: async fields => {
+      const session = await signInPortal(fields)
+      await store.refresh()
+      return session
     },
-    signOut: async () => { signOutTestAccount(); return { signedOut: true } },
+    register: registerPortal,
+    resetPassword: resetPortalPassword,
+    requestEmailChangeVerification: requestPortalVerification,
+    verifyEmailChange: verifyPortalEmail,
+    requestPasswordVerification: requestPortalVerification,
+    verifyPasswordEmail: verifyPortalEmail,
+    changePassword: changePortalPassword,
+    signOut: async () => {
+      const result = await signOutPortal()
+      await store.refresh()
+      return result
+    },
   }))
-  const [loadSession] = useState(() => async () => sessionFor(getTestUser()))
-  useEffect(() => {
-    const update = event => { if (event.key === 'ironclad-frontend-system-v1') store.refresh() }
-    window.addEventListener('storage', update)
-    return () => window.removeEventListener('storage', update)
-  }, [store])
+  const [loadSession] = useState(() => async ({ signal } = {}) => {
+    const [session] = await Promise.all([
+      loadPortalSession({ signal }),
+      store.refresh({ signal }),
+    ])
+    return session
+  })
   return <AuthProvider loadSession={loadSession}><PortalProvider authActions={authActions}><SystemRoutes store={store} /></PortalProvider></AuthProvider>
 }
 
@@ -60,14 +66,14 @@ function SystemRoutes({ store }) {
   const user = useMemo(() => effectiveUser(auth.user, snapshot), [auth.user, snapshot])
   const student = useMemo(() => ({ service: createStudentService({ operations: {
     getProfile: async () => ({ profile: user ? {
-      id: user.id, version: store.getSnapshot().profiles[user.id]?.version || 0, studentId: user.studentId, fullName: getFrontendDirectory().find(person => person.id === user.id)?.name || user.name, programCode: user.course,
+      id: user.id, version: store.getSnapshot().profiles[user.id]?.version || 0, studentId: user.studentId, fullName: store.getSnapshot().directory.find(person => person.id === user.id)?.name || user.name, programCode: user.course,
       section: `${user.yearLevel}${user.section}`, position: positionLabel(user), displayName: store.getSnapshot().profiles[user.id]?.displayName || '', corrections: store.getSnapshot().profiles[user.id]?.corrections || [],
       email: store.getSnapshot().profiles[user.id]?.email || user.email || '', avatarUrl: store.getSnapshot().profiles[user.id]?.avatarUrl || '',
       emailVerified: store.getSnapshot().profiles[user.id]?.emailVerified === true,
       lastSyncedAt: store.getSnapshot().profiles[user.id]?.updatedAt || 'No changes saved yet', sourceLabel: 'Campus account', passwordManaged: fixedAccount(user),
     } : null }),
     updateProfile: async input => {
-      try { return store.saveProfile(user, input) } catch (failure) { failure.status = 422; throw failure }
+      try { return await store.saveProfile(user, input) } catch (failure) { failure.status ||= 422; throw failure }
     },
     getArchive: async () => {
       const records = store.getSnapshot().archive.map(record => ({ ...record, hasAsset: true, venue: { ...record.venue, type: 'room' } }))
@@ -95,8 +101,8 @@ function SystemRoutes({ store }) {
     <Route path="/admin/bookings" element={<Navigate to="/admin" replace />} />
     <Route path="/admin/events" element={allowed(user?.role === 'admin', <Navigate to="/news-feed?kind=event" replace />)} />
     <Route path="/admin/dashboard" element={allowed(user?.role === 'admin', <SystemDashboard store={store} snapshot={snapshot} user={user} />)} />
-    <Route path="/admin/people" element={allowed(user?.role === 'admin' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={getFrontendDirectory()} />)} />
-    <Route path="/council/members" element={allowed(user?.role === 'council' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={getFrontendDirectory()} />)} />
+    <Route path="/admin/people" element={allowed(user?.role === 'admin' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={snapshot.directory} />)} />
+    <Route path="/council/members" element={allowed(user?.role === 'council' && canManageMembers(user), <OrganizationManagement store={store} snapshot={snapshot} user={user} directory={snapshot.directory} />)} />
     <Route path="/admin/roles" element={allowed(user?.role === 'admin', <Navigate to="/council/applications" replace />)} />
     <Route path="/booking" element={signedIn(user && <SystemBooking store={store} snapshot={snapshot} user={user} />)} />
     <Route path="/archive" element={signedIn(<Archive />)} />

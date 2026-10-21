@@ -74,11 +74,16 @@ export function createApiClient({ baseUrl = import.meta.env?.VITE_API_URL, fetch
         }
       }
       if (!response.ok) {
+        const backendError = data?.error
         throw new ApiError(
-          response.status === 409 || response.status === 412
+          backendError?.message || (response.status === 409 || response.status === 412
             ? 'This record has changed. Refresh it before trying again.'
-            : 'The service could not complete this request. Please retry.',
-          { code: 'HTTP_ERROR', status: response.status, details: data },
+            : 'The service could not complete this request. Please retry.'),
+          {
+            code: backendError?.code || 'HTTP_ERROR',
+            status: response.status,
+            details: backendError?.details ?? data,
+          },
         )
       }
       return data
@@ -87,3 +92,45 @@ export function createApiClient({ baseUrl = import.meta.env?.VITE_API_URL, fetch
 }
 
 export const apiClient = createApiClient()
+
+// Compatibility helpers used by the booking/admin/news-feed feature services.
+// They delegate to the same validated client so every feature shares one error contract.
+export class ApiRequestError extends ApiError {
+  constructor(message, options = {}) {
+    super(message, options)
+    this.name = 'ApiRequestError'
+  }
+}
+
+export async function apiRequest(path, options = {}) {
+  const { body, json, ...requestOptions } = options
+  let payload = json
+  if (payload === undefined && body !== undefined) {
+    try {
+      payload = typeof body === 'string' ? JSON.parse(body) : body
+    } catch (cause) {
+      throw new ApiRequestError('The request body must contain valid JSON.', {
+        code: 'INVALID_JSON',
+        cause,
+      })
+    }
+  }
+  try {
+    return await apiClient.request(path, { ...requestOptions, json: payload })
+  } catch (error) {
+    if (error instanceof ApiRequestError || error?.name === 'AbortError') throw error
+    if (error instanceof ApiError) {
+      throw new ApiRequestError(error.message, {
+        code: error.code,
+        status: error.status,
+        details: error.details,
+        cause: error,
+      })
+    }
+    throw error
+  }
+}
+
+export function jsonOptions(method, body) {
+  return { method, json: body }
+}

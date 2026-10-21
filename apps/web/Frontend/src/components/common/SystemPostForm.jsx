@@ -8,18 +8,20 @@ export default function SystemPostForm({ store, user, onClose }) {
   const [kind, setKind] = useState('announcement')
   const [registrationKind, setRegistrationKind] = useState('individual')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
   const guard = useRef(false)
   const field = (label, name, props = {}) => <label className="block text-sm font-semibold">{label}<input name={name} required className={`${inputClass} mt-1 font-normal`} {...props} /></label>
-  return <SystemDialog title="Create news post" onClose={onClose} wide>
-    <form className="space-y-4" onSubmit={event => {
+  return <SystemDialog title="Create news post" onClose={onClose} wide busy={busy}>
+    <form className="space-y-4" onSubmit={async event => {
       event.preventDefault()
       if (guard.current) return
       guard.current = true
+      setBusy(true); setError('')
       const fields = Object.fromEntries(new FormData(event.currentTarget))
       try {
-        store.publish(user, { ...fields, kind, registrationKind, capacity: Number(fields.capacity), teamSize: Number(fields.teamSize), startsAt: `${fields.startsAt}:00+08:00`, endsAt: `${fields.endsAt}:00+08:00`, questions: String(fields.questions || '').split('\n').map(q => q.trim()).filter(Boolean), categories: String(fields.categories || '').split(',').map(q => q.trim()).filter(Boolean) })
+        await store.publish(user, { ...fields, kind, registrationKind, capacity: Number(fields.capacity), teamSize: Number(fields.teamSize), startsAt: `${fields.startsAt}:00+08:00`, endsAt: `${fields.endsAt}:00+08:00`, questions: String(fields.questions || '').split('\n').map(q => q.trim()).filter(Boolean), categories: String(fields.categories || '').split(',').map(q => q.trim()).filter(Boolean) })
         onClose()
-      } catch (failure) { setError(failure.message) } finally { guard.current = false }
+      } catch (failure) { setError(failure.message) } finally { guard.current = false; setBusy(false) }
     }}>
       <label className="block text-sm font-semibold">Post type<ThemedSelect label="Post type" value={kind} onChange={value => { setKind(value); setError('') }} options={Object.entries(postKinds).map(([value, label]) => ({ value, label }))} className="mt-1" /></label>
       {field('Title', 'title', { maxLength: 120 })}
@@ -37,7 +39,7 @@ export default function SystemPostForm({ store, user, onClose }) {
       </>}
       <p className="text-xs leading-5 text-textSecondary">Your post and its attached form will appear in the News Feed and the matching filter for every account.</p>
       {error && <p role="alert" className="rounded-control bg-selectBg p-3 text-sm">{error}</p>}
-      <div className="flex flex-wrap justify-end gap-2"><button type="button" onClick={onClose} className={secondaryButton}>Cancel</button><button type="submit" className={primaryButton}>Publish post</button></div>
+      <div className="flex flex-wrap justify-end gap-2"><button type="button" disabled={busy} onClick={onClose} className={secondaryButton}>Cancel</button><button type="submit" disabled={busy} className={primaryButton}>{busy ? 'Publishing…' : 'Publish post'}</button></div>
     </form>
   </SystemDialog>
 }
