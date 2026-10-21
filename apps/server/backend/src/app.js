@@ -2,13 +2,19 @@ import express from 'express';
 import { config } from './config.js';
 import { createDemoData } from './data/demoData.js';
 import { createAdminAccessMiddleware } from './http/adminAccess.js';
+import { createCouncilAccessMiddleware } from './http/councilAccess.js';
 import { errorMiddleware, HttpError } from './http/errors.js';
 import {
   parseAdminRequestQuery,
   parseAdminVenueQuery,
+  parseCouncilRequestQuery,
+  parseCouncilReservationBody,
   parseCouncilRoleBody,
+  parseCouncilSidebarQuery,
+  parseCouncilVenueQuery,
   parseDecisionBody,
   parseDetailsQuery,
+  parseEndorsementBody,
   parseListQuery,
   parseLockBody,
   parseOccupancyQuery,
@@ -21,6 +27,7 @@ import { InMemoryBookingRepository } from './repositories/inMemoryBookingReposit
 import { AdminBookingService } from './services/adminBookingService.js';
 import { AdminPortalService } from './services/adminPortalService.js';
 import { BookingService } from './services/bookingService.js';
+import { CouncilBookingService } from './services/councilBookingService.js';
 
 export function createApp({ repository, settings = config } = {}) {
   const activeRepository = repository
@@ -32,7 +39,14 @@ export function createApp({ repository, settings = config } = {}) {
     settings,
   );
   const adminPortalService = new AdminPortalService(activeRepository, settings);
+  const councilBookingService = new CouncilBookingService(
+    activeRepository,
+    bookingService,
+    adminBookingService,
+    settings,
+  );
   const requireAdmin = createAdminAccessMiddleware(activeRepository, settings);
+  const requireCouncil = createCouncilAccessMiddleware(activeRepository, settings);
   const app = express();
 
   app.disable('x-powered-by');
@@ -64,6 +78,7 @@ export function createApp({ repository, settings = config } = {}) {
   });
 
   app.use('/admin', requireAdmin);
+  app.use('/council', requireCouncil);
 
   app.get('/admin/session', (request, response, next) => {
     try {
@@ -171,6 +186,83 @@ export function createApp({ repository, settings = config } = {}) {
       response.json(adminPortalService.setCouncilRole(
         request.params.memberId,
         parseCouncilRoleBody(request.body),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/session', (request, response, next) => {
+    try {
+      response.json(councilBookingService.getSession(request.councilSession));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/venues', (request, response, next) => {
+    try {
+      response.json(councilBookingService.listVenues(
+        parseCouncilVenueQuery(request.query, settings),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/venues/:roomCode/sidebar', (request, response, next) => {
+    try {
+      response.json(councilBookingService.venueSidebar(
+        request.params.roomCode,
+        parseCouncilSidebarQuery(request.query, settings),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/booking-requests', (request, response, next) => {
+    try {
+      response.json(councilBookingService.listRequests(
+        parseCouncilRequestQuery(request.query, settings),
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/booking-requests/:reservationId/sidebar', (request, response, next) => {
+    try {
+      const { atTime } = parseCouncilSidebarQuery(request.query, settings);
+      response.json(councilBookingService.requestSidebar(
+        request.params.reservationId,
+        atTime,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/notices', (_request, response, next) => {
+    try { response.json(councilBookingService.listNotices()); } catch (error) { next(error); }
+  });
+
+  app.get('/council/notices/:noticeId/guidelines', (request, response, next) => {
+    try {
+      response.json(councilBookingService.getGuidelines(request.params.noticeId));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/council/reservations/config', (request, response, next) => {
+    try {
+      response.json(councilBookingService.getReservationConfig(request.councilSession));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/council/reservations', (request, response, next) => {
+    try {
+      response.status(201).json(councilBookingService.createReservation(
+        parseCouncilReservationBody(request.body, settings),
+        request.councilSession,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/council/booking-requests/:reservationId/endorsements', (request, response, next) => {
+    try {
+      const { message } = parseEndorsementBody(request.body, settings);
+      response.status(201).json(councilBookingService.createEndorsement(
+        request.params.reservationId,
+        message,
+        request.councilSession,
       ));
     } catch (error) { next(error); }
   });

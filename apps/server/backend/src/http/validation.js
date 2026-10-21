@@ -270,3 +270,102 @@ export function parseCouncilRoleBody(body) {
     councilRoleId: typeof body.council_role_id === 'string' ? body.council_role_id.trim() || null : null,
   };
 }
+
+function councilInstant(settings) {
+  return settings.council.clockIso ? new Date(settings.council.clockIso) : new Date();
+}
+
+function optionalText(value, field) {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new HttpError(400, `INVALID_${field.toUpperCase()}`, `${field} must be text`);
+  }
+  return value.trim();
+}
+
+export function parseCouncilVenueQuery(query, settings) {
+  const instant = councilInstant(settings);
+  const date = query.date || currentDateInZone(settings.timeZone, instant);
+  const parsed = parseListQuery({ ...query, date }, settings);
+  return {
+    ...parsed,
+    selectedRoomCode: optionalText(query.selected_room_code, 'selected_room_code'),
+    atTime: currentTimeInZone(settings.timeZone, instant),
+  };
+}
+
+export function parseCouncilSidebarQuery(query, settings) {
+  const instant = councilInstant(settings);
+  const date = query.date || currentDateInZone(settings.timeZone, instant);
+  const atTime = query.at_time || currentTimeInZone(settings.timeZone, instant);
+  if (!isIsoDate(date)) {
+    throw new HttpError(400, 'INVALID_DATE', 'date must be a valid ISO date (YYYY-MM-DD)');
+  }
+  if (!isTime(atTime)) {
+    throw new HttpError(400, 'INVALID_TIME', 'at_time must use HH:mm 24-hour format');
+  }
+  return { date, atTime };
+}
+
+export function parseCouncilRequestQuery(query, settings) {
+  const decision = query.decision || 'all';
+  const sort = query.sort || 'created_at';
+  if (!validDecisions.has(decision)) {
+    throw new HttpError(400, 'INVALID_DECISION', 'decision must be all, pending, approved, or rejected');
+  }
+  if (!['created_at', 'date'].includes(sort)) {
+    throw new HttpError(400, 'INVALID_SORT', 'sort must be created_at or date');
+  }
+  const q = optionalText(query.q, 'q') || '';
+  const roomCode = optionalText(query.room_code, 'room_code');
+  const selectedReservationId = optionalText(
+    query.selected_reservation_id,
+    'selected_reservation_id',
+  );
+  const limit = nonNegativeInteger(query.limit, 'limit', settings.council.requestLimit);
+  const offset = nonNegativeInteger(query.offset, 'offset', 0);
+  if (limit < 1 || limit > settings.council.requestLimitMax) {
+    throw new HttpError(
+      400,
+      'INVALID_LIMIT',
+      `limit must be between 1 and ${settings.council.requestLimitMax}`,
+    );
+  }
+  return {
+    q,
+    decision,
+    roomCode,
+    sort,
+    limit,
+    offset,
+    selectedReservationId,
+  };
+}
+
+export function parseCouncilReservationBody(body, settings) {
+  const parsed = parseLockBody({
+    ...(body && typeof body === 'object' && !Array.isArray(body) ? body : {}),
+    student_id: settings.defaultStudentId,
+  }, settings);
+  return {
+    roomCode: parsed.roomCode,
+    date: parsed.date,
+    startTime: parsed.startTime,
+    endTime: parsed.endTime,
+    purpose: parsed.purpose,
+  };
+}
+
+export function parseEndorsementBody(body, settings) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new HttpError(400, 'INVALID_BODY', 'Request body must be a JSON object');
+  }
+  if (typeof body.message !== 'string' || !body.message.trim()) {
+    throw new HttpError(400, 'ENDORSEMENT_MESSAGE_REQUIRED', 'message is required');
+  }
+  const message = body.message.trim();
+  if ([...message].length > settings.council.endorsementMaxLength) {
+    throw new HttpError(400, 'ENDORSEMENT_TOO_LONG', 'Endorsement message is too long');
+  }
+  return { message };
+}

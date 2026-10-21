@@ -250,8 +250,7 @@ export class BookingService {
     };
   }
 
-  getVacancy(roomCode, { date, requestedStart }) {
-    const venue = this.assertUsableVenue(roomCode);
+  vacancyPayload(venue, date, requestedStart) {
     const windows = freeWindows(
       this.effectiveEntries(venue.room_code, date),
       this.settings.operationalWindow,
@@ -275,11 +274,16 @@ export class BookingService {
     }
     const total = windows.reduce((sum, window) => sum + window.duration_hours, 0);
     return {
-      data: {
-        free_windows: windows,
-        full_vacancy_hours: Math.round(total * 10) / 10,
-        suggested_duration: suggestedDuration,
-      },
+      free_windows: windows,
+      full_vacancy_hours: Math.round(total * 10) / 10,
+      suggested_duration: suggestedDuration,
+    };
+  }
+
+  getVacancy(roomCode, { date, requestedStart }) {
+    const venue = this.assertUsableVenue(roomCode);
+    return {
+      data: this.vacancyPayload(venue, date, requestedStart),
       meta: { date, room_code: venue.room_code },
     };
   }
