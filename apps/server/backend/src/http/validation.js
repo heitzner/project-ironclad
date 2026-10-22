@@ -11,6 +11,41 @@ const validPeriods = new Set(['all_day', 'morning', 'evening']);
 const validOccupancyStates = new Set(['all', 'available', 'occupied', 'unavailable']);
 const validDecisions = new Set(['all', 'pending', 'approved', 'rejected']);
 
+function parseBoundedInteger(value, field, fallback, { min, max }) {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(String(value))) {
+    throw new HttpError(400, 'INVALID_QUERY', `${field} must be an integer.`);
+  }
+  const parsed = Number.parseInt(value, 10);
+  if (parsed < min || parsed > max) {
+    throw new HttpError(400, 'INVALID_QUERY', `${field} must be between ${min} and ${max}.`);
+  }
+  return parsed;
+}
+
+export function parseFeedQuery(query, categories) {
+  const q = typeof query.q === 'string' ? query.q.trim() : '';
+  if (q.length > 100) {
+    throw new HttpError(400, 'INVALID_QUERY', 'q must not exceed 100 characters.');
+  }
+
+  const category = typeof query.category === 'string'
+    ? query.category.trim().toLowerCase()
+    : '';
+  if (category && !categories.includes(category)) {
+    throw new HttpError(400, 'INVALID_QUERY', 'category is not supported.', {
+      allowed: categories,
+    });
+  }
+
+  return {
+    q,
+    category,
+    limit: parseBoundedInteger(query.limit, 'limit', 12, { min: 1, max: 50 }),
+    offset: parseBoundedInteger(query.offset, 'offset', 0, { min: 0, max: 10000 }),
+  };
+}
+
 function parseDate(value, settings) {
   const date = value || currentDateInZone(settings.timeZone);
   if (!isIsoDate(date)) {

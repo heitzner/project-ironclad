@@ -5,5 +5,16 @@
     "apps/*",
     "apps/web/Frontend",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "dev:frontend": "npm --prefix apps/web/Frontend run dev",
+    "dev:backend": "npm --prefix apps/server run dev",
+    "test:backend": "npm --prefix apps/server test",
+    "lint:frontend": "npm --prefix apps/web/Frontend run lint",
+    "build:frontend": "npm --prefix apps/web/Frontend run build"
+  },
+  "dependencies": {
+    "lucide-react": "^1.59.0",
+    "react-router-dom": "^7.18.4"
+  }
 }

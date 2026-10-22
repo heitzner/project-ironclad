@@ -25,15 +25,15 @@ function StatusBadge({ variant = 'green', icon: Icon, children }) {
 
 function PageHeader({ icon: Icon, title, subtitle, children }) {
   return (
-    <header className="flex items-center justify-between gap-4 rounded-panel bg-white p-4 shadow-card">
-      <div className="max-w-[400px] min-w-0">
-        <div className="flex items-center gap-1">
+    <header className="flex flex-col items-start justify-between gap-4 rounded-panel bg-white p-4 shadow-card sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-1">
           {Icon && <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-dark" />}
-          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.5px] text-textPrimary">{title}</h1>
+          <h1 className="min-w-0 wrap-anywhere text-[20px] font-semibold leading-7 tracking-[-0.5px] text-textPrimary">{title}</h1>
         </div>
         {subtitle && <p className="mt-0.5 text-[12px] font-normal leading-[18px] text-textSecondary">{subtitle}</p>}
       </div>
-      {children && <div className="flex shrink-0 items-center gap-1">{children}</div>}
+      {children && <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{children}</div>}
     </header>
   )
 }

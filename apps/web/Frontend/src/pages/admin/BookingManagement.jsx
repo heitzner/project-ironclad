@@ -6,6 +6,7 @@ import AdminState from '../../components/admin/AdminState.jsx'
 import AdminTable from '../../components/admin/AdminTable.jsx'
 import BookingRequests from '../../components/admin/BookingRequests.jsx'
 import RoomDetails from '../../components/admin/RoomDetails.jsx'
+import { useSearchParams } from 'react-router-dom'
 
 export default function BookingManagement({
   rooms,
@@ -14,13 +15,13 @@ export default function BookingManagement({
   error,
   onRetry,
   onDecision,
+  onCheckStatus,
   ...shell
 }) {
-  const [query, setQuery] = useState('')
-  const [floor, setFloor] = useState('')
-  const [occupancy, setOccupancy] = useState('')
-  const [decision, setDecision] = useState('')
-  const [grid, setGrid] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const query = params.get('q') ?? '', floor = params.get('floor') ?? '', occupancy = params.get('occupancy') ?? '', decision = params.get('decision') ?? '', grid = params.get('view') === 'cards'
+  const change = (name, value) => setParams(current => { const next = new URLSearchParams(current); if (value) next.set(name, value); else next.delete(name); return next }, { replace: true })
+  const setQuery = value => change('q', value), setFloor = value => change('floor', value), setOccupancy = value => change('occupancy', value), setDecision = value => change('decision', value)
   const [selected, setSelected] = useState(null)
   const floors = [
     ...new Set((rooms ?? []).map((room) => room.floor).filter((value) => value != null)),
@@ -29,7 +30,7 @@ export default function BookingManagement({
     (room) =>
       (!floor || String(room.floor) === floor) &&
       (!occupancy || room.occupancy === occupancy) &&
-      `${room.number ?? ''} ${room.name ?? ''} ${room.location ?? ''}`
+      `Room ${room.number ?? ''} ${room.name ?? ''} ${room.location ?? ''}`
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   )
@@ -62,12 +63,12 @@ export default function BookingManagement({
               Floor {value}
             </button>
           ))}
-          <label className="relative min-w-0 flex-1">
+          <label className="relative min-w-0 flex-[1_1_12rem]">
             <span className="sr-only">Search rooms</span>
             <Search aria-hidden="true" className="absolute left-3 top-3.5 h-4 w-4 text-textMuted" />
             <input
               type="search"
-              className="admin-field pl-9"
+              className="admin-field admin-search-field"
               placeholder="Search room or facility…"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -77,7 +78,7 @@ export default function BookingManagement({
             type="button"
             className="admin-icon-button"
             aria-label={grid ? 'Show room list' : 'Show room cards'}
-            onClick={() => setGrid((value) => !value)}
+              onClick={() => change('view', grid ? '' : 'cards')}
           >
             {grid ? <List className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
           </button>
@@ -111,6 +112,7 @@ export default function BookingManagement({
           </label>
         </div>
       </section>
+      {(query || floor || occupancy || decision) && <button type="button" className="admin-secondary self-start" onClick={() => setParams(grid ? { view: 'cards' } : {})}>Clear room and booking filters</button>}
       <section className="rounded-panel bg-white" aria-label="Room availability">
         {loading || error || !rooms || showEmpty ? (
           <AdminState
@@ -132,7 +134,7 @@ export default function BookingManagement({
                   </span>
                 </div>
                 <p className="mt-2 text-xs">{room.name}</p>
-                <p className="mt-2 text-xs text-textMuted">
+                <p className="mt-2 text-xs text-textSecondary">
                   {room.capacity ?? 'Unspecified'} seats ·{' '}
                   {room.location || 'Location not provided'}
                 </p>
@@ -164,7 +166,7 @@ export default function BookingManagement({
                 </td>
                 <td className="admin-cell">
                   <p className="font-semibold">{room.name}</p>
-                  <p className="mt-1 text-[10px] text-textMuted">
+                  <p className="mt-1 text-[10px] text-textSecondary">
                     {room.location || 'Location not provided'}
                   </p>
                 </td>
@@ -198,9 +200,10 @@ export default function BookingManagement({
         loading={loading}
         error={error}
         onRetry={onRetry}
+        onCheckStatus={onCheckStatus}
       />
       {selected && (
-        <RoomDetails room={selected} bookings={bookings} onClose={() => setSelected(null)} />
+        <RoomDetails room={rooms?.find(room => room.id === selected.id) ?? selected} bookings={bookings} onClose={() => setSelected(null)} />
       )}
     </AdminShell>
   )

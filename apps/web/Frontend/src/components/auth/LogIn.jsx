@@ -10,14 +10,14 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
+import EmailVerification from '../common/EmailVerification.jsx'
 import ironcladLogo from '../../assets/ironclad_lightmode.png'
-import { registerTestStudent, signInTestAccount } from './test-auth.js'
 
 // Shared controls and scoped animation styles.
 const FIELD_CLASS =
-  'min-h-11 w-full rounded-control border border-track bg-selectBg px-4 py-3 text-sm text-textPrimary placeholder:text-textMuted focus:outline-none focus:ring-2 focus:ring-primary'
+  'min-h-11 w-full rounded-control border border-textMuted bg-selectBg px-4 py-3 text-sm text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-2 focus:ring-primary'
 const BUTTON_CLASS =
-  'min-h-11 rounded-control bg-primary px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+  'min-h-11 rounded-control bg-dark px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
 const TOGGLE_CLASS =
   'min-h-11 rounded-control border border-white px-8 py-3 text-sm font-semibold hover:bg-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
 const LOGIN_STYLES = `
@@ -26,7 +26,7 @@ const LOGIN_STYLES = `
   max-width: 770px;
 }
 .ironclad-login[data-view="forms"] {
-  height: min(480px, calc(100svh - 32px));
+  height: auto;
 }
 .ironclad-login .ic-stage {
   position: relative;
@@ -34,7 +34,7 @@ const LOGIN_STYLES = `
 }
 .ironclad-login .ic-form {
   min-height: 0;
-  gap: 10px;
+  gap: 8px;
   padding: 24px 28px;
 }
 .ironclad-login .ic-form > img {
@@ -46,8 +46,18 @@ const LOGIN_STYLES = `
   font-size: 22px;
   line-height: 28px;
 }
-.ironclad-login .ic-form > p:empty {
-  display: none;
+.ironclad-login .ic-feedback {
+  min-height: 40px;
+  overflow-wrap: anywhere;
+}
+.ironclad-login .ic-signin {
+  justify-content: flex-start;
+}
+.ironclad-login .ic-signin > img {
+  margin-top: auto;
+}
+.ironclad-login .ic-signin > p:last-child {
+  margin-bottom: auto;
 }
 .ironclad-login .ic-form > * {
   flex-shrink: 0;
@@ -74,8 +84,12 @@ const LOGIN_STYLES = `
   text-align: center;
 }
 @media (min-width: 768px) {
+  .ironclad-login[data-view="forms"] {
+    height: min(600px, calc(100svh - 32px));
+    overflow: hidden;
+  }
   .ironclad-login .ic-stage {
-    height: 480px;
+    height: 100%;
   }
   .ironclad-login .ic-form,
   .ironclad-login .ic-form[inert] {
@@ -88,23 +102,17 @@ const LOGIN_STYLES = `
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
-    transition: transform 0.6s ease-in-out;
+    visibility: visible;
   }
-  .ironclad-login .ic-signin {
-    z-index: 2;
+  .ironclad-login .ic-form[inert] {
+    visibility: hidden;
+    transition: visibility 0s linear 0.7s;
+    /* Keep the gutter stable without flashing the covered form's scrollbar. */
+    scrollbar-color: transparent transparent;
   }
-  .ironclad-login .ic-signup {
-    z-index: 1;
-    opacity: 0;
-  }
-  .ironclad-login[data-signup="true"] .ic-signin {
-    transform: translateX(100%);
-  }
-  .ironclad-login[data-signup="true"] .ic-signup {
-    transform: translateX(100%);
-    opacity: 1;
-    z-index: 5;
-    animation: ic-form-swap 0.6s;
+  .ironclad-login .ic-signup,
+  .ironclad-login .ic-signup[inert] {
+    left: 50%;
   }
   .ironclad-login .ic-overlay-window {
     position: absolute;
@@ -116,8 +124,8 @@ const LOGIN_STYLES = `
     border-radius: 64px 0 0 64px;
     z-index: 6;
     transition:
-      transform 0.6s ease-in-out,
-      border-radius 0.6s ease-in-out;
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      border-radius 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .ironclad-login[data-signup="true"] .ic-overlay-window {
     transform: translateX(-100%);
@@ -125,54 +133,43 @@ const LOGIN_STYLES = `
   }
   .ironclad-login .ic-overlay {
     position: relative;
-    left: -100%;
-    width: 200%;
+    width: 100%;
     height: 100%;
-    transform: translateX(0);
-    transition: transform 0.6s ease-in-out;
-  }
-  .ironclad-login[data-signup="true"] .ic-overlay {
-    transform: translateX(50%);
   }
   .ironclad-login .ic-welcome,
   .ironclad-login .ic-welcome[inert] {
     display: flex;
     position: absolute;
     top: 0;
-    width: 50%;
+    left: 0;
+    width: 100%;
     height: 100%;
-    transition: transform 0.6s ease-in-out;
+    overflow-y: auto;
+    justify-content: safe center;
+    transition: opacity 0.25s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ironclad-login .ic-welcome[inert] {
+    visibility: hidden;
   }
   .ironclad-login .ic-welcome-back {
-    left: 0;
-    transform: translateX(-200%);
+    opacity: 0;
+    transform: translateX(-12%);
   }
   .ironclad-login .ic-welcome-new {
-    right: 0;
+    opacity: 1;
     transform: translateX(0);
   }
   .ironclad-login[data-signup="true"] .ic-welcome-back {
+    opacity: 1;
     transform: translateX(0);
   }
   .ironclad-login[data-signup="true"] .ic-welcome-new {
-    transform: translateX(200%);
-  }
-}
-@keyframes ic-form-swap {
-  0%,
-  49.99% {
     opacity: 0;
-    z-index: 1;
-  }
-  50%,
-  100% {
-    opacity: 1;
-    z-index: 5;
+    transform: translateX(12%);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ironclad-login .ic-form,
-  .ironclad-login .ic-overlay-window,
+  /* Keep the requested panel slide and form-cover timing in both preferences. */
   .ironclad-login .ic-overlay,
   .ironclad-login .ic-welcome {
     transition: none;
@@ -181,7 +178,7 @@ const LOGIN_STYLES = `
 }
 `
 
-function PasswordField({ label, name, autoComplete, minLength, fieldClass }) {
+function PasswordField({ label, name, autoComplete, minLength, fieldClass, disabled }) {
   const [visible, setVisible] = useState(false)
   const inputId = useId()
   const Icon = visible ? EyeOff : Eye
@@ -192,6 +189,7 @@ function PasswordField({ label, name, autoComplete, minLength, fieldClass }) {
         <input
           id={inputId}
           name={name}
+          disabled={disabled}
           type={visible ? 'text' : 'password'}
           autoComplete={autoComplete}
           minLength={minLength}
@@ -200,6 +198,7 @@ function PasswordField({ label, name, autoComplete, minLength, fieldClass }) {
         />
         <button
           type="button"
+          disabled={disabled}
           aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
           aria-pressed={visible}
           aria-controls={inputId}
@@ -214,17 +213,18 @@ function PasswordField({ label, name, autoComplete, minLength, fieldClass }) {
 }
 
 // Registration fields: student identity, campus email, and course/year/section.
-function RegistrationFields() {
+function RegistrationFields({ disabled }) {
   return (
     <>
       <label className="grid gap-1 text-xs font-semibold">
         Full name
-        <input name="name" autoComplete="name" required maxLength={120} className={FIELD_CLASS} />
+        <input name="name" autoComplete="name" required disabled={disabled} maxLength={120} className={FIELD_CLASS} />
       </label>
       <label className="grid gap-1 text-xs font-semibold">
         Registered campus email
         <input
           name="email"
+          disabled={disabled}
           type="email"
           autoComplete="email"
           required
@@ -236,6 +236,7 @@ function RegistrationFields() {
         Course
         <input
           name="course"
+          disabled={disabled}
           type="text"
           placeholder="e.g. BSCS"
           autoCapitalize="characters"
@@ -252,6 +253,7 @@ function RegistrationFields() {
           Year level
           <select
             name="yearLevel"
+            disabled={disabled}
             aria-label="Year level"
             required
             defaultValue=""
@@ -271,6 +273,7 @@ function RegistrationFields() {
           Section letter
           <select
             name="section"
+            disabled={disabled}
             aria-label="Section letter"
             required
             defaultValue=""
@@ -301,6 +304,8 @@ function LoginForm({
   onSubmit,
   onForgotPassword,
   message,
+  blocked,
+  preview,
 }) {
   const mode = registration ? 'signup' : 'signin'
 
@@ -319,13 +324,14 @@ function LoginForm({
       <p className="text-center text-xs text-textSecondary">
         {registration
           ? 'Register with your student details'
-          : 'Your username is your student number'}
+          : 'Use your student number to sign in'}
       </p>
       <label className="grid gap-1 text-xs font-semibold">
-        {registration ? 'Student ID' : 'Username'}
+        Student-ID
         <input
           ref={inputRef}
           name="studentId"
+          disabled={busy}
           type="text"
           autoComplete="username"
           autoCapitalize="characters"
@@ -338,13 +344,14 @@ function LoginForm({
           className={FIELD_CLASS}
         />
       </label>
-      {registration && <RegistrationFields />}
+      {registration && <RegistrationFields disabled={busy} />}
       <PasswordField
         label="Password"
         name="password"
         autoComplete={registration ? 'new-password' : 'current-password'}
         minLength={registration ? 8 : undefined}
         fieldClass={FIELD_CLASS}
+        disabled={busy}
       />
       {registration && (
         <PasswordField
@@ -353,6 +360,7 @@ function LoginForm({
           autoComplete="new-password"
           minLength={8}
           fieldClass={FIELD_CLASS}
+          disabled={busy}
         />
       )}
       {!registration && (
@@ -361,6 +369,7 @@ function LoginForm({
             <input
               type="checkbox"
               name="remember"
+              disabled={busy}
               className="h-4 w-4 rounded-chip accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             />
             Remember me
@@ -368,7 +377,8 @@ function LoginForm({
           <button
             type="button"
             onClick={onForgotPassword}
-            className="min-h-11 rounded-control text-[11px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            disabled={busy}
+            className="min-h-11 rounded-control text-[11px] font-semibold text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Forgot Password?
           </button>
@@ -377,15 +387,15 @@ function LoginForm({
       <p
         id={`${id}-${mode}-message`}
         role="status"
-        className="text-xs leading-5 text-textSecondary"
+        className="ic-feedback text-xs leading-5 text-textSecondary"
       >
         {inactive ? '' : message}
       </p>
-      <button type="submit" disabled={busy} className={BUTTON_CLASS}>
+      <button type="submit" disabled={busy || blocked} className={BUTTON_CLASS}>
         {busy && !inactive ? 'Please wait…' : registration ? 'Sign Up' : 'Sign In'}
       </button>
-      <p className="text-center text-[10px] leading-4 text-textMuted">
-        Browser testing only · No production authentication
+      <p className="text-center text-[10px] leading-4 text-textSecondary">
+        {preview ? 'Preview access for Admin, Council and Student.' : 'Use your campus account to continue.'}
       </p>
     </form>
   )
@@ -393,8 +403,8 @@ function LoginForm({
 
 function WelcomePanels({ signUp, busy, onSwitch }) {
   return (
-    <div className="ic-overlay-window">
-      <div className="ic-overlay bg-primary text-white">
+    <div className="ic-overlay-window bg-dark text-white">
+      <div className="ic-overlay">
         <aside className="ic-welcome ic-welcome-back" inert={!signUp} aria-hidden={!signUp}>
           <h3 className="text-3xl font-bold">Welcome to IronClad!</h3>
           <p className="max-w-xs text-sm leading-6">
@@ -438,6 +448,7 @@ function AccountFeedback({
   onReset,
   resetField,
   confirmationHeading,
+  busy,
 }) {
   return (
     <section className="relative grid gap-7 px-6 py-8 sm:px-12 sm:py-12">
@@ -445,6 +456,7 @@ function AccountFeedback({
         <button
           type="button"
           onClick={onBack}
+          disabled={busy}
           className="flex min-h-11 items-center gap-2 rounded-control text-sm font-medium text-textSecondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft aria-hidden="true" className="h-5 w-5" />
@@ -453,6 +465,7 @@ function AccountFeedback({
         <button
           type="button"
           onClick={onClose}
+          disabled={busy}
           aria-label="Close dialog"
           className="flex h-11 w-11 items-center justify-center rounded-full text-textMuted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
@@ -473,12 +486,12 @@ function AccountFeedback({
           id={`${id}-${view}-title`}
           className="rounded-control text-3xl font-bold focus:outline-none"
         >
-          {view === 'reset' ? 'Account Reset' : 'Account Created'}
+          {view === 'reset' ? 'Account Reset' : 'Registration received'}
         </h2>
         <p className="max-w-xl text-sm leading-7 text-textSecondary">
           {view === 'reset'
             ? 'Enter your registered campus email to request an account reset.'
-            : 'Your test student account is ready. Use your student number as your username to sign in.'}
+            : 'Your registration was received. Follow the account status shown below.'}
         </p>
       </div>
       {view === 'reset' ? (
@@ -491,6 +504,7 @@ function AccountFeedback({
                 ref={resetField}
                 type="email"
                 name="email"
+                disabled={busy}
                 autoComplete="email"
                 placeholder="e.g. student@campus.edu"
                 required
@@ -511,15 +525,17 @@ function AccountFeedback({
           </p>
           <button
             type="submit"
+            disabled={busy}
             className={`${BUTTON_CLASS} flex items-center justify-center gap-3`}
           >
-            Send Reset Link <Send aria-hidden="true" className="h-5 w-5" />
+            {busy ? 'Requesting…' : 'Send Reset Link'} <Send aria-hidden="true" className="h-5 w-5" />
           </button>
           <p className="border-t border-track pt-6 text-center text-sm text-textSecondary">
             Remembered your password?{' '}
             <button
               type="button"
               onClick={onBack}
+              disabled={busy}
               className="min-h-11 rounded-control font-semibold text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Back to Login
@@ -545,25 +561,31 @@ function AccountFeedback({
 }
 
 // Component and scoped styles stay together; no separate login stylesheet.
-export default function LogIn({ onClose, onSignedIn }) {
+export default function LogIn({ onClose, onSignedIn, handlers, initialMode = 'signin' }) {
   const dialog = useRef(null)
   const signInField = useRef(null)
   const signUpField = useRef(null)
   const resetField = useRef(null)
   const confirmationHeading = useRef(null)
   const id = useId()
-  const [signUp, setSignUp] = useState(false)
+  const [signUp, setSignUp] = useState(initialMode === 'signup')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [view, setView] = useState('forms')
+  const [pendingRegistration, setPendingRegistration] = useState(null)
+  const [registrationBlocked, setRegistrationBlocked] = useState(false)
+  const submitGuard = useRef(false)
+  const mounted = useRef(false)
 
   useEffect(() => {
     const element = dialog.current
     const trigger = document.activeElement
     const previousOverflow = document.body.style.overflow
+    mounted.current = true
     element.showModal()
     document.body.style.overflow = 'hidden'
     return () => {
+      mounted.current = false
       element.close()
       document.body.style.overflow = previousOverflow
       if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
@@ -574,16 +596,19 @@ export default function LogIn({ onClose, onSignedIn }) {
     const field =
       view === 'reset'
         ? resetField.current
-        : view === 'created'
+        : (view === 'created' || view === 'verify')
           ? confirmationHeading.current
           : signUp
             ? signUpField.current
             : signInField.current
+    const form = field?.closest('.ic-form')
+    if (form) form.scrollTop = 0
     field?.focus({ preventScroll: true })
     if (dialog.current) dialog.current.scrollTop = 0
   }, [signUp, view])
 
   function backToSignIn() {
+    if (submitGuard.current) return
     setView('forms')
     setSignUp(false)
     setMessage('')
@@ -596,45 +621,52 @@ export default function LogIn({ onClose, onSignedIn }) {
   }
 
   function openReset() {
+    if (submitGuard.current) return
     setMessage('')
     setView('reset')
   }
 
-  function requestReset(event) {
+  async function requestReset(event) {
     event.preventDefault()
-    setMessage(
-      'Reset email delivery is not connected yet. No email has been sent. Please contact your portal administrator.',
-    )
+    if (submitGuard.current) return
+    if (typeof handlers?.resetPassword !== 'function') { setMessage('Account reset is not connected yet. No email has been sent.'); return }
+    submitGuard.current = true
+    setBusy(true)
+    try {
+      const result = await handlers.resetPassword({ email: new FormData(event.currentTarget).get('email') })
+      if (result?.confirmed !== true || typeof result?.message !== 'string' || !result.message.trim()) throw new Error('The reset request has not been confirmed. Check your account status before trying again.')
+      if (mounted.current) setMessage(result.message)
+    } catch (error) { if (mounted.current) setMessage(error?.message || 'Unable to request an account reset.') }
+    finally { submitGuard.current = false; if (mounted.current) setBusy(false) }
   }
 
   async function submit(event) {
     event.preventDefault()
-    if (busy) return
+    if (submitGuard.current) return
+    if (signUp && registrationBlocked) { setMessage('Registration is still unconfirmed. Check your account status before trying again.'); return }
     const fields = new FormData(event.currentTarget)
+    const handler = signUp ? handlers?.register : handlers?.signIn
+    if (typeof handler !== 'function') { setMessage(`${signUp ? 'Registration' : 'Sign-in'} is not connected yet. Your information has not been submitted.`); return }
+    if (signUp && fields.get('password') !== fields.get('confirmPassword')) { setMessage('Passwords must match.'); return }
+    submitGuard.current = true
     setBusy(true)
     setMessage('')
     try {
       if (signUp) {
-        await registerTestStudent(Object.fromEntries(fields))
-        event.target.reset()
-        setSignUp(false)
-        setView('created')
-        setMessage(
-          'Test student account created. Sign in with your student ID and password. This account is available in this browser tab until it is closed.',
-        )
+        setPendingRegistration(Object.fromEntries(fields))
+        setView('verify')
+        return
       } else {
-        await signInTestAccount(
-          fields.get('studentId'),
-          fields.get('password'),
-          fields.get('remember') === 'on',
-        )
-        onSignedIn?.()
-        onClose()
+        const result = await handler({ studentId: fields.get('studentId'), password: fields.get('password'), remember: fields.get('remember') === 'on' })
+        if (!mounted.current) return
+        await onSignedIn?.(result)
       }
     } catch (error) {
-      setMessage(error.message || 'Unable to continue. Please try again.')
+      if (mounted.current && signUp && ![400, 401, 403, 409, 422].includes(error?.status)) setRegistrationBlocked(true)
+      if (mounted.current) setMessage(error?.message || 'Unable to continue. Please try again.')
     } finally {
-      setBusy(false)
+      submitGuard.current = false
+      if (mounted.current) setBusy(false)
     }
   }
 
@@ -657,22 +689,31 @@ export default function LogIn({ onClose, onSignedIn }) {
         event.preventDefault()
         if (!busy) onClose()
       }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return
+        const fields = [...event.currentTarget.querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')].filter(node => !node.disabled && !node.closest('[inert], [hidden]') && node.getClientRects().length)
+        const first = fields[0], last = fields.at(-1)
+        if (event.shiftKey && (document.activeElement === first || !fields.includes(document.activeElement))) { event.preventDefault(); last?.focus() }
+        else if (!event.shiftKey && (document.activeElement === last || !fields.includes(document.activeElement))) { event.preventDefault(); first?.focus() }
+      }}
       onClick={(event) => {
         if (!busy && event.target === event.currentTarget) onClose()
       }}
       className="ironclad-login m-auto max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-card border-0 bg-white p-0 text-textPrimary shadow-nav backdrop:bg-deep/60 backdrop:backdrop-blur-sm"
     >
       <style>{LOGIN_STYLES}</style>
-      {view !== 'forms' && (
+      {view === 'verify' && <div className="p-6 sm:p-10"><h2 ref={confirmationHeading} tabIndex={-1} id={`${id}-verify-title`} className="mb-5 text-xl font-bold">Complete your registration</h2><EmailVerification email={pendingRegistration?.email || ''} purpose="signup" onBusyChange={setBusy} request={handlers?.requestSignupVerification} verify={handlers?.verifySignupEmail} onBack={() => { setView('forms'); setSignUp(Boolean(pendingRegistration)) }} onVerified={async verificationReceipt => { const result = await handlers.register({ ...pendingRegistration, verificationReceipt }); if (result?.confirmed !== true) throw new Error('Account creation was not confirmed.'); setPendingRegistration(null); dialog.current?.querySelector('.ic-signup')?.reset() }} /></div>}
+      {view !== 'forms' && view !== 'verify' && (
         <AccountFeedback
           view={view}
           id={id}
           message={message}
           onBack={backToSignIn}
-          onClose={onClose}
+          onClose={() => { if (!busy) onClose() }}
           onReset={requestReset}
           resetField={resetField}
           confirmationHeading={confirmationHeading}
+          busy={busy}
         />
       )}
       <div className="ic-stage" hidden={view !== 'forms'}>
@@ -685,7 +726,7 @@ export default function LogIn({ onClose, onSignedIn }) {
         >
           <X aria-hidden="true" className="h-5 w-5" />
         </button>
-        {/* Both forms stay mounted so they slide together and retain typed values. */}
+        {/* Forms retain their sides and values; the rounded green panel slides over the inactive side. */}
         {[false, true].map((registration) => (
           <LoginForm
             key={registration ? 'signup' : 'signin'}
@@ -696,7 +737,9 @@ export default function LogIn({ onClose, onSignedIn }) {
             inputRef={registration ? signUpField : signInField}
             onSubmit={submit}
             onForgotPassword={openReset}
-            message={message}
+            blocked={registration && registrationBlocked}
+            message={registration && registrationBlocked ? 'Registration is still unconfirmed. Sign in to check your account or contact your administrator before trying again.' : message}
+            preview={handlers?.preview === true}
           />
         ))}
         <WelcomePanels signUp={signUp} busy={busy} onSwitch={switchForm} />

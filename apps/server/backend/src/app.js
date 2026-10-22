@@ -1,6 +1,8 @@
 import express from 'express';
 import { config } from './config.js';
 import { createDemoData } from './data/demoData.js';
+import { newsFeedSeed } from './data/newsFeedSeed.js';
+import { createPortalDemoData } from './data/portalDemoData.js';
 import { createAdminAccessMiddleware } from './http/adminAccess.js';
 import { createCouncilAccessMiddleware } from './http/councilAccess.js';
 import { errorMiddleware, HttpError } from './http/errors.js';
@@ -20,18 +22,32 @@ import {
   parseOccupancyQuery,
   parseReservationConfigQuery,
   parseEventBody,
+  parseFeedQuery,
   parseVersionBody,
   parseVacancyQuery,
 } from './http/validation.js';
 import { InMemoryBookingRepository } from './repositories/inMemoryBookingRepository.js';
+import { InMemoryNewsRepository } from './repositories/InMemoryNewsRepository.js';
+import { InMemoryPortalRepository } from './repositories/inMemoryPortalRepository.js';
 import { AdminBookingService } from './services/adminBookingService.js';
 import { AdminPortalService } from './services/adminPortalService.js';
 import { BookingService } from './services/bookingService.js';
 import { CouncilBookingService } from './services/councilBookingService.js';
+import { NewsFeedService } from './services/NewsFeedService.js';
+import { PortalService } from './services/portalService.js';
 
-export function createApp({ repository, settings = config } = {}) {
+export function createApp({
+  repository,
+  newsRepository,
+  portalRepository,
+  newsSeed = newsFeedSeed,
+  settings = config,
+} = {}) {
   const activeRepository = repository
     || new InMemoryBookingRepository(createDemoData(settings.demoWeekStart));
+  const activeNewsRepository = newsRepository || new InMemoryNewsRepository(newsSeed);
+  const activePortalRepository = portalRepository
+    || new InMemoryPortalRepository(createPortalDemoData(settings.demoWeekStart));
   const bookingService = new BookingService(activeRepository, settings);
   const adminBookingService = new AdminBookingService(
     activeRepository,
@@ -45,6 +61,8 @@ export function createApp({ repository, settings = config } = {}) {
     adminBookingService,
     settings,
   );
+  const newsFeedService = new NewsFeedService(activeNewsRepository);
+  const portalService = new PortalService(activePortalRepository);
   const requireAdmin = createAdminAccessMiddleware(activeRepository, settings);
   const requireCouncil = createCouncilAccessMiddleware(activeRepository, settings);
   const app = express();
@@ -56,8 +74,8 @@ export function createApp({ repository, settings = config } = {}) {
       && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '');
     if (origin && (settings.cors?.allowedOrigins?.includes(origin) || localDevelopmentOrigin)) {
       response.set('Access-Control-Allow-Origin', origin);
-      response.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,OPTIONS');
-      response.set('Access-Control-Allow-Headers', 'Content-Type,x-ironclad-test-session');
+      response.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      response.set('Access-Control-Allow-Headers', 'Authorization,Content-Type,x-ironclad-test-session');
       response.set('Vary', 'Origin');
       if (request.method === 'OPTIONS') return response.sendStatus(204);
     }
@@ -67,6 +85,175 @@ export function createApp({ repository, settings = config } = {}) {
 
   app.get('/health', (_request, response) => {
     response.json({ status: 'ok', service: 'ironclad-booking' });
+  });
+
+  const bearerToken = (request) => {
+    const authorization = request.get('authorization') || '';
+    const match = /^Bearer\s+(.+)$/i.exec(authorization);
+    return match?.[1] || null;
+  };
+  const portalAccount = (request) => activePortalRepository.resolveSession(bearerToken(request));
+  const requirePortalAccount = (request) => {
+    const account = portalAccount(request);
+    if (!account) throw new HttpError(401, 'AUTHENTICATION_REQUIRED', 'Sign in to continue');
+    return account;
+  };
+  const mutationResponse = (response, account, data, status = 200) => response.status(status).json({
+    data,
+    state: portalService.stateFor(account),
+  });
+
+  app.post('/auth/sign-in', (request, response, next) => {
+    try { response.json(portalService.signIn(request.body)); } catch (error) { next(error); }
+  });
+
+  app.post('/auth/register', (request, response, next) => {
+    try { response.status(201).json(portalService.register(request.body)); } catch (error) { next(error); }
+  });
+
+  app.post('/auth/password-reset', (request, response, next) => {
+    try { response.json(portalService.resetPassword(request.body)); } catch (error) { next(error); }
+  });
+
+  app.post('/auth/verifications', (request, response, next) => {
+    try {
+      response.status(201).json(portalService.requestVerification(
+        requirePortalAccount(request), request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/auth/verifications/confirm', (request, response, next) => {
+    try {
+      response.json(portalService.verifyEmail(requirePortalAccount(request), request.body));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/auth/password', (request, response, next) => {
+    try {
+      response.json(portalService.changePassword(requirePortalAccount(request), request.body));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/auth/session', (request, response, next) => {
+    try { response.json(portalService.session(portalAccount(request))); } catch (error) { next(error); }
+  });
+
+  app.post('/auth/sign-out', (request, response, next) => {
+    try {
+      activePortalRepository.deleteSession(bearerToken(request));
+      response.json({ signedOut: true });
+    } catch (error) { next(error); }
+  });
+
+  app.get('/portal/state', (request, response, next) => {
+    try { response.json(portalService.stateFor(portalAccount(request))); } catch (error) { next(error); }
+  });
+
+  app.post('/portal/bookings', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.createBooking(account, request.body), 201);
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/bookings/:bookingId/decision', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.decideBooking(
+        account, request.params.bookingId, request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/closures', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.createClosure(account, request.body), 201);
+    } catch (error) { next(error); }
+  });
+
+  app.delete('/portal/rooms/:roomId/closures', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.reopenRoom(account, request.params.roomId));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/posts', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.publish(account, request.body), 201);
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/posts/:postId/submissions', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.submit(
+        account, request.params.postId, request.body,
+      ), 201);
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/applications/:applicationId/decision', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.reviewApplication(
+        account, request.params.applicationId, request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.patch('/portal/profiles/:accountId', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.saveProfile(
+        account, request.params.accountId, request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.patch('/portal/members/:memberId/position', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.assignPosition(
+        account, request.params.memberId, request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/handovers', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.nominatePresident(account, request.body), 201);
+    } catch (error) { next(error); }
+  });
+
+  app.post('/portal/handovers/:handoverId/respond', (request, response, next) => {
+    try {
+      const account = requirePortalAccount(request);
+      mutationResponse(response, account, portalService.respondHandover(
+        account, request.params.handoverId, request.body,
+      ));
+    } catch (error) { next(error); }
+  });
+
+  app.get('/news-feed', (request, response, next) => {
+    try {
+      const categories = newsFeedService.getCategories().map((category) => category.value);
+      response.json(newsFeedService.list(parseFeedQuery(request.query, categories)));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/news-feed/:postId', (request, response, next) => {
+    try {
+      response.json(newsFeedService.getById(request.params.postId));
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get('/booking/notices', (_request, response, next) => {

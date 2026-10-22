@@ -1,0 +1,560 @@
+{
+  "inspected": "2026-10-19",
+  "note": "Original preparation assets. Dynamic Council identity/campaign records still require real supplied data. Rendered callsites and geometry await their page tasks.",
+  "assets": [
+    {
+      "file": "7cab5.png",
+      "localPath": "./7cab5.png",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1286"
+      ],
+      "bytes": 562685,
+      "width": 2047,
+      "height": 2048,
+      "sha256": "A24179C81403762ED95229DCC5B26E0A825BEA1B86FF991B261EA594ADAE6EFF",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "d768e.png",
+      "localPath": "../../../features/student-booking/assets/d768e.png",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1142"
+      ],
+      "bytes": 147819,
+      "width": 1080,
+      "height": 1080,
+      "sha256": "57279081C648C1B35CEF8473F0E3D9C239DA1C6C72D10663309FEF9833DA11F5",
+      "identicalBookingAsset": true
+    },
+    {
+      "file": "5d2d9.png",
+      "localPath": "./5d2d9.png",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1197"
+      ],
+      "bytes": 282166,
+      "width": 2048,
+      "height": 2048,
+      "sha256": "9ED29198C823F1DAC27C409A926E2629FAFD0543244EFE53F649FFBF21A7B700",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "a6a0e.svg",
+      "localPath": "./a6a0e.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1118"
+      ],
+      "bytes": 1122,
+      "width": "23",
+      "height": "15",
+      "sha256": "2CA8E57906D0C2DDF5FFAD1D3A396F9483D51CEB95176A079D87AD1D3E98988E",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "7673c.svg",
+      "localPath": "./7673c.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1125"
+      ],
+      "bytes": 428,
+      "width": "9.33333",
+      "height": "9.33333",
+      "sha256": "1A849476ACDBBFD9C1A5F13E2A08A2C6D55942BEB14D127413056DBEE0BA777B",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "8fbc7.svg",
+      "localPath": "./8fbc7.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1132"
+      ],
+      "bytes": 409,
+      "width": "6",
+      "height": "11.9333",
+      "sha256": "EB9B03E85119E93071BCB9D2B68B0197A4824230FEED3C696E92016EA0BABCDC",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "ee36b.svg",
+      "localPath": "./ee36b.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1293",
+        "289:1539"
+      ],
+      "bytes": 396,
+      "width": "15.4",
+      "height": "15.4",
+      "sha256": "07A96BC88B866FCAA3A2C1170A655AB88D077EC21E979EF49E8D40085794E89C",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "ed922.svg",
+      "localPath": "./ed922.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1142"
+      ],
+      "bytes": 505,
+      "width": "596",
+      "height": "208",
+      "sha256": "D2686D83AD8607E8306EFC2A70C6A625F3D387B948D652D49D0B21793773F224",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "b8e80.svg",
+      "localPath": "./b8e80.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1149",
+        "230:1204"
+      ],
+      "bytes": 1496,
+      "width": "9.33333",
+      "height": "11.6667",
+      "sha256": "A9D19D75D8B25C0306DB570292BB5D2EF33A953A0A08642EE3AB5B03665F65FB",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "f2661.svg",
+      "localPath": "./f2661.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1154",
+        "230:1209"
+      ],
+      "bytes": 1570,
+      "width": "11.6667",
+      "height": "11.6667",
+      "sha256": "9051E58823502F23F0252ACA4A80EB703B095BD464BF47464DEDE912A954F162",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "f8cbf.svg",
+      "localPath": "./f8cbf.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1180"
+      ],
+      "bytes": 709,
+      "width": "8",
+      "height": "10",
+      "sha256": "47A1536631D12380F4363DA8B82D963ADE75AE23164A08D07B5D7E2213CA20E9",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "11fcf.svg",
+      "localPath": "./11fcf.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1186"
+      ],
+      "bytes": 1011,
+      "width": "10.5",
+      "height": "10.5",
+      "sha256": "EAC3D6BE7DB1C263E1691C8BBA62B4266EFD41DBC0515CE5EDD7F05AC9E40FD2",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "a566a.svg",
+      "localPath": "./a566a.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1191"
+      ],
+      "bytes": 1919,
+      "width": "11.6667",
+      "height": "9.56667",
+      "sha256": "41A3CF9FEBC4A12A476C2D37C54AABBBC3805B5E5F92105CAAC1554B7736B3A0",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "ae777.svg",
+      "localPath": "./ae777.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1235"
+      ],
+      "bytes": 1132,
+      "width": "9",
+      "height": "9",
+      "sha256": "B29D3A7091EE6E255A4E9F5656D55484C7DFFC5FFFA35EE982942CC462F8480C",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "c6855.svg",
+      "localPath": "./c6855.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1241"
+      ],
+      "bytes": 405,
+      "width": "11.0833",
+      "height": "11.0833",
+      "sha256": "3E3D4333BE988901DE5131828C18B6F6AD3142ECE87A9479A28725FC71B4004C",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "c4ddf.svg",
+      "localPath": "./c4ddf.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1246"
+      ],
+      "bytes": 2887,
+      "width": "11.6667",
+      "height": "9.33333",
+      "sha256": "EBA278539A8FFB12047859204EA51893B3A99CC1BC06531CD4C3B8CEC2D0F3C0",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "1824e.svg",
+      "localPath": "./1824e.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:1092",
+      "nodes": [
+        "230:1282"
+      ],
+      "bytes": 330,
+      "width": "7",
+      "height": "4.31667",
+      "sha256": "0C70F87EA504B55F8B1B89C61234044A2D9B639256575E46D04AB6836843431B",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "8e9fb.svg",
+      "localPath": "./8e9fb.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:814",
+      "nodes": [
+        "230:818"
+      ],
+      "bytes": 399,
+      "width": "11.6667",
+      "height": "11.6667",
+      "sha256": "12B7138E0D2FEAC0764A804DA54FD67E3C11C26FFF0D0EB1FB1BB2BF41B5582E",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "61cee.svg",
+      "localPath": "./61cee.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:814",
+      "nodes": [
+        "230:822"
+      ],
+      "bytes": 2027,
+      "width": "19.97",
+      "height": "14",
+      "sha256": "F7818452499FF55F0CEE5D09D505EBBFCE6E7ECE4B223B9CD5A3073AE5014B72",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "a61ba.svg",
+      "localPath": "./a61ba.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:814",
+      "nodes": [
+        "230:842"
+      ],
+      "bytes": 947,
+      "width": "8",
+      "height": "8",
+      "sha256": "45D3AD47975DCEAD6851EAA42E46C0E14329CD9DE69297EB12BDA97AA617AB9E",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "24e77.svg",
+      "localPath": "./24e77.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "230:814",
+      "nodes": [
+        "230:924"
+      ],
+      "bytes": 1605,
+      "width": "11.6667",
+      "height": "11.6667",
+      "sha256": "9C5589A517DC196B72F319850CED09C5C526A23F66D4E30A238AA8A8BA5539BD",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "bd3b7.png",
+      "localPath": "./bd3b7.png",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "289:1454",
+      "nodes": [
+        "289:1532"
+      ],
+      "bytes": 11888,
+      "width": 512,
+      "height": 512,
+      "sha256": "849EB7B27C05F1B3CD1EBFC6F5B252F9684781BA6CFA7896292992FD4316D9B7",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "28520.svg",
+      "localPath": "./28520.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "292:826",
+      "nodes": [
+        "292:842"
+      ],
+      "bytes": 368,
+      "width": "10.6667",
+      "height": "10.6667",
+      "sha256": "78357A5D660B21DAC651DD0D4B8A598685887B877C0FC77B84E3F78EA126A0C9",
+      "identicalBookingAsset": false
+    },
+    {
+      "file": "24b0d.svg",
+      "localPath": "./24b0d.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "292:826",
+      "nodes": [
+        "292:846"
+      ],
+      "bytes": 423,
+      "width": "11.6667",
+      "height": "11.6667",
+      "sha256": "6D04738CB38943BFDA5BC462626244E1CB7CBBF996818E28E5DC673FAE5CC9B1",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "ad8ab.svg",
+      "localPath": "./ad8ab.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "292:826",
+      "nodes": [
+        "292:853"
+      ],
+      "bytes": 364,
+      "width": "26.85",
+      "height": "20.475",
+      "sha256": "334ED27C235C447EC0FEDBA087C779640A75BEA55C7D779AF5BAA99272CA5EDB",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "13a05.svg",
+      "bytes": 423,
+      "width": "11.6667",
+      "height": "11.6667",
+      "frame": "230:1434",
+      "identicalBookingAsset": null,
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "localPath": "./13a05.svg",
+      "sha256": "6D04738CB38943BFDA5BC462626244E1CB7CBBF996818E28E5DC673FAE5CC9B1",
+      "nodes": [
+        "230:1437",
+        "230:1511",
+        "261:907"
+      ]
+    },
+    {
+      "file": "135bc.png",
+      "localPath": "./135bc.png",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "289:1392",
+        "289:1397",
+        "289:1409",
+        "289:1421",
+        "289:1433",
+        "289:1445"
+      ],
+      "bytes": 12541,
+      "width": 512,
+      "height": 512,
+      "sha256": "9992456A5626323227F1352127C282FD5AE73A7D45E86D42143549FD61742123",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "1f1c7.svg",
+      "localPath": "./1f1c7.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1273"
+      ],
+      "bytes": 313,
+      "width": "4.625",
+      "height": "7.5",
+      "sha256": "A13F8C726AB4D4793EE8671FB2D2A7C5AFCC013335BBE89AD79EE9149CC92C37",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "44d03.svg",
+      "localPath": "./44d03.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1043"
+      ],
+      "bytes": 1391,
+      "width": "15",
+      "height": "15",
+      "sha256": "9F220B6DB211214B7E3C1A4E20E218EA04E065F56300306BCB7FBE8AB960E11E",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "5f629.svg",
+      "localPath": "./5f629.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1029",
+        "261:1035",
+        "261:1041"
+      ],
+      "bytes": 273,
+      "width": "9",
+      "height": "5.55",
+      "sha256": "7D6401B5D236BB193EDAFE471016A1B96800D7A68DF270355294CDDF4DD9FF59",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "5f95f.svg",
+      "localPath": "./5f95f.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1021"
+      ],
+      "bytes": 438,
+      "width": "9.91667",
+      "height": "9.91667",
+      "sha256": "B4E71FF849046C1F439B10E565B8F17C795325F8516E405002109804193D6249",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "61eb9.svg",
+      "localPath": "./61eb9.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:996"
+      ],
+      "bytes": 1192,
+      "width": "14.1667",
+      "height": "14.1667",
+      "sha256": "0ADA8232CBBE628C984399FC33909A27A8E975E0F070465867A1659149DA5897",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "7e034.svg",
+      "localPath": "./7e034.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1295"
+      ],
+      "bytes": 1938,
+      "width": "14.1667",
+      "height": "14.1667",
+      "sha256": "422A9DE41F97EEA51CC46510516CDDD6661E2268A16D4B56214EDD78FBFC31E5",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "9fa02.svg",
+      "localPath": "./9fa02.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:984"
+      ],
+      "bytes": 336,
+      "width": "4.00833",
+      "height": "6.5",
+      "sha256": "2352DC265C5EB9DE22EDF4A821C7BFB84C3B5BA40E92C0AF74051774F7E976E9",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "a0360.svg",
+      "localPath": "./a0360.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1019"
+      ],
+      "bytes": 1127,
+      "width": "14.25",
+      "height": "14.25",
+      "sha256": "11B0E40BCBFBA945329C479488F6FF3B0BD1016F3E77C6B55F1D46A9B7B0710C",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "c4d3f.svg",
+      "localPath": "./c4d3f.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1064",
+        "261:1098",
+        "261:1132",
+        "261:1166",
+        "261:1200",
+        "261:1234"
+      ],
+      "bytes": 1065,
+      "width": "12.75",
+      "height": "14.1667",
+      "sha256": "B27AE853A4D648FD19A43763C06EA498C163EE0804FB573BFE30C16D150BDC40",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "d7967.svg",
+      "localPath": "./d7967.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "289:1377",
+        "289:1401",
+        "289:1413",
+        "289:1425",
+        "289:1437",
+        "289:1449"
+      ],
+      "bytes": 421,
+      "width": "11.6667",
+      "height": "11.6667",
+      "sha256": "3C702FB75C0BC9191B02A5145CAB4116FC69D5D985BE0BCB151B13B374359675",
+      "identicalBookingAsset": null
+    },
+    {
+      "file": "fa469.svg",
+      "localPath": "./fa469.svg",
+      "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+      "frame": "261:975",
+      "nodes": [
+        "261:1290"
+      ],
+      "bytes": 315,
+      "width": "4.625",
+      "height": "7.5",
+      "sha256": "5121C118446EE4D2A30FC9894EAF2011C6421BA8DB8E781829FEBBBC4CA90E1B",
+      "identicalBookingAsset": null
+    }
+  ]
+}

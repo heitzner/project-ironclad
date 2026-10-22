@@ -1,0 +1,16 @@
+@reference "../../index.css";
+.ic-scroll { scrollbar-width: thin; scrollbar-color: theme('colors.soft') theme('colors.pageBg'); scrollbar-gutter: stable; }
+.ic-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.ic-scroll::-webkit-scrollbar-track { background: theme('colors.pageBg'); border-radius: 16px; }
+.ic-scroll::-webkit-scrollbar-thumb { background: theme('colors.soft'); border: 2px solid theme('colors.pageBg'); border-radius: 16px; }
+.ic-room-target { position: absolute; inset: 0; z-index: 1; border-radius: inherit; cursor: pointer; }
+.ic-room-target:focus-visible { outline: 3px solid theme('colors.primary'); outline-offset: -3px; }
+.ic-row-target { cursor: pointer; }
+.ic-row-target:focus-visible { outline: 3px solid theme('colors.primary'); outline-offset: -3px; }
+.ic-calendar { container-type: inline-size; }
+/* A compact date list preserves 44px targets when seven calendar columns cannot fit. */
+@container (max-width: 307px) {
+  .ic-calendar-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ic-calendar-weekdays, .ic-calendar-blank { display: none; }
+  .ic-calendar-weekday { display: block; }
+}

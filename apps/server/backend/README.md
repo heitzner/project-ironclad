@@ -1,6 +1,11 @@
-# Room & Laboratory Booking API
+# Legacy Room & Laboratory Booking API
 
-Backend-only Express implementation for the IronClad booking catalog and selected-venue sidebar.
+> The active integrated API lives in `apps/server/src`. Running `npm start` or
+> `npm run dev` from this legacy directory intentionally starts that active API,
+> so older terminal setups cannot occupy port 3000 with incompatible routes.
+> The implementation below remains for compatibility tests.
+
+Express implementation for the IronClad portal and booking catalog.
 It has no database, ORM, cache, file persistence, or external timetable source. Venues, schedules,
 students, and reservations are held in process memory and reset to Demo week data whenever the
 server restarts.
@@ -10,6 +15,7 @@ server restarts.
 ```powershell
 npm install
 npm test
+npm run dev
 npm start
 ```
 
@@ -18,7 +24,13 @@ Monday unless `DEMO_WEEK_START` is supplied.
 
 ## Endpoints
 
+The default React application uses the role-aware `/auth/*` and `/portal/*` routes documented in
+[`API_CONTRACTS.md`](./API_CONTRACTS.md). The routes listed below remain available for the dedicated
+booking, news-feed, and administrator feature adapters.
+
 - `GET /health`
+- `GET /news-feed?q=&category=&limit=&offset=`
+- `GET /news-feed/:postId`
 - `GET /booking/notices`
 - `GET /venues?date=YYYY-MM-DD&period=all_day|morning|evening&floor=1|2|3|4&q=text`
 - `GET /venues/:roomCode?date=YYYY-MM-DD&period=all_day|morning|evening`
@@ -29,6 +41,12 @@ Monday unless `DEMO_WEEK_START` is supplied.
 - `POST /reservations/lock`
 - `POST /reservations/:reservationId/approve`
 - `POST /reservations/:reservationId/reject`
+
+### Student News Feed
+
+News-feed posts, categories, search, and pagination are served from the same Express application as
+booking and administration. All seeded posts are marked with `is_demo: true` and
+`dataset_label: "Demo week"`. The repository is in memory until database integration is supplied.
 
 ### Admin Room Bookings
 

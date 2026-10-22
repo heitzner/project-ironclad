@@ -14,9 +14,3 @@ build/
 .DS_Store
 .vscode/
 *.log
-
-# Local AI assistant skill caches
-packages/database/.agents/
-packages/database/.claude/
-packages/database/.cursor/
-packages/database/.devin/

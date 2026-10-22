@@ -1,0 +1,12 @@
+{
+  "fileKey": "wAJzDv1UAuyzc6V7w99IQU",
+  "frame": "169:2454",
+  "inspectedOn": "2026-10-20",
+  "assets": [
+    { "file": "viewer-logo.png", "original": "03788.png", "node": "I169:3105;204:389", "slot": "Viewer navbar logo" },
+    { "file": "announcements.svg", "original": "efcdb.svg", "node": "169:2460", "slot": "Campus news heading" },
+    { "file": "next-venue.svg", "original": "fb8cb.svg", "node": "169:2473", "slot": "Response-provided next venue badge" }
+  ],
+  "reused": "Search, clear, category, more-event and campaign icons reuse the matching original Council assets. Campaign images and metadata remain supplied data.",
+  "verification": "Nonempty files, hashes and intrinsic SVG dimensions checked. Effective rendered geometry remains unverified."
+}
