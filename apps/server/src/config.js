@@ -11,6 +11,16 @@ export const config = Object.freeze({
   otpTtlSeconds: integer('OTP_TTL_SECONDS', 10 * 60),
   otpResendSeconds: integer('OTP_RESEND_SECONDS', 60),
   production: process.env.NODE_ENV === 'production',
+  dataStore: (() => {
+    const value = process.env.DATA_STORE || 'memory'
+    if (!['memory', 'postgres'].includes(value)) throw new Error('DATA_STORE must be "memory" or "postgres"')
+    return value
+  })(),
+  database: Object.freeze({
+    url: process.env.DATABASE_URL || '',
+    caCertPath: process.env.DATABASE_CA_CERT || '',
+    poolMax: integer('DATABASE_POOL_MAX', 5),
+  }),
   email: Object.freeze({
     user: process.env.GMAIL_USER || '',
     pass: process.env.GMAIL_APP_PASSWORD || '',

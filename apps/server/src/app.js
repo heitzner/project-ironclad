@@ -2,6 +2,7 @@ import express from 'express'
 import { config } from './config.js'
 import { HttpError, errorMiddleware } from './http/errors.js'
 import { requirePositions, requireRoles } from './http/access.js'
+import { persistMutations } from './http/persistence.js'
 import { InMemoryPortalRepository } from './repositories/InMemoryPortalRepository.js'
 import { createAuthRoutes } from './routes/authRoutes.js'
 import { AuthService } from './services/AuthService.js'
@@ -58,6 +59,7 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
     next()
   })
   app.use(express.json({ limit: '1mb' }))
+  app.use('/api', persistMutations(repository))
 
   const optionalAuth = (request, _response, next) => {
     try { const token = bearerToken(request); request.identity = token ? auth.authenticate(token) : null; next() } catch (error) { next(error) }
@@ -70,7 +72,7 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
     } catch (error) { next(error) }
   }
 
-  app.get(['/health', '/api/health'], (_request, response) => response.json({ status: 'ok', service: 'ironclad-server', store: 'in-memory' }))
+  app.get(['/health', '/api/health'], (_request, response) => response.json({ status: 'ok', service: 'ironclad-server', store: repository.storeName || 'in-memory' }))
   app.post('/api/auth/sign-in', asyncRoute((request, response) => response.json(auth.signIn(request.body || {}))))
   app.post('/api/auth/register', asyncRoute((request, response) => response.status(201).json(auth.register(request.body || {}))))
   app.post('/api/auth/password-reset', asyncRoute((request, response) => response.json(auth.resetPassword(request.body || {}))))
