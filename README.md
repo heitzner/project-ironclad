@@ -41,17 +41,26 @@ IronClad is a microservices-based web application developed for the Computer Stu
 This project is organized as a [monorepo](https://monorepo.tools/) managed via npm workspaces:
 
 ```text
-.
-└── project-ironclad
-    ├── apps
-    │   ├── server
-    │   └── web
-    │       ├── public
-    │       └── src
-    │           └── assets
-    └── packages
-        ├── config
-        └── database
+project-ironclad/
+├── .github/
+│   ├── CODEOWNERS                 # Required reviewers per folder
+│   └── workflows/ci.yml           # Pull request checks
+├── apps/
+│   ├── AGENTS.md                  # Contribution rules for apps/
+│   ├── server/                    # Backend (Express)
+│   │   ├── src/                   # Active backend runtime
+│   │   ├── test/                  # Active backend tests
+│   │   ├── backend/               # Legacy implementation (do not extend)
+│   │   └── DATA_CONTRACTS.md      # API and data shapes
+│   └── web/
+│       └── Frontend/              # Frontend (React + Vite)
+│           └── src/
+├── packages/
+│   ├── config/                    # Shared configuration (reserved)
+│   └── database/                  # Supabase CLI, migrations, seed data
+├── QA-BUG-AND-ISSUE-REPORT.md     # Known defects and security findings
+├── Team-Handoff.md                # Workflows, routes, roles, test accounts
+└── README.md
 ```
 ## Team & Domain Responsibilities
 
@@ -61,7 +70,12 @@ This project is organized as a [monorepo](https://monorepo.tools/) managed via n
 * **Fullstack Developer**: Feature Integration across server/client layers, state management and webhooks.
 * **Quality Assurance**: Inspect the initial website, analyze possible bugs, loopholes, security measures.
 
-## Setup Instructions
+## Requirements
+
+- [Node.js](https://nodejs.org/en) 24 LTS or newer: The frontend tooling needs at least 20.19, and the backend test runner needs 24 or newer.
+- npm (bundled with Node.js) and [Git](https://git-scm.com/).
+
+## Getting Started
 
 1. Clone the repository:
 ```
@@ -70,19 +84,33 @@ git clone https://github.com/heitzner/project-ironclad
 
 2. Install all dependencies across workspaces:
 ```
-npm install
+npm ci
 ```
 
-3. Run the frontend development server:
+> [!NOTE]
+> Use `npm install <package>` only when intentionally adding a dependency, and commit the updated `package.lock.json`, alternatively, doing `npm install` inside the respective folders to get the necessary updates.
+
+## Running the Website
+
+Use two terminal sessions (from VSCode, most common)
+
+1. Terminal 1, run backend API on `http://localhost:3000/api`
 ```
-npm run dev --workspaces=apps/web
+npm run dev:backend
 ```
+
+2. Terminal 2, run fronted on `http://localhost:5173`
+```
+npm run dev:frontend
+```
+
+Backend should be up and running by opening `http://localhost:3000/api/health`. Status message must return with `"status":"ok"`
 
 ## Development Workflow
 
 1. Always pull the latest changes from `main` before creating a new branch:
 ```
-git checkout main
+git switch main
 git pull origin main
 ```
 
@@ -91,4 +119,6 @@ git pull origin main
 git checkout -b feat/your-feature
 ```
 
-3. Open a PR (Pull Request) on GitHub **against** `main` upon completion for code review. Direct pushes to `main` are **restricted**.
+3. Open a PR (Pull Request) on GitHub **against** `main` upon completion for code review. Code owners in .github/CODEOWNERS review changes to their folders.
+
+4. When resolving merge conflicts, never delete or overwrite another team's folder. If a conflict touches files you do not own, ask the colleague's part before merging.
