@@ -8,11 +8,21 @@ const [{ createApp }, { config }] = await Promise.all([
   import('./config.js'),
 ])
 
-const { app } = createApp()
+let repository, pool
+if (config.dataStore === 'postgres') {
+  const [{ createPool }, { PostgresPortalRepository }] = await Promise.all([
+    import('./db/pool.js'),
+    import('./repositories/PostgresPortalRepository.js'),
+  ])
+  pool = createPool(config.database)
+  repository = await PostgresPortalRepository.connect({ pool })
+}
+
+const { app } = createApp({ repository })
 const server = app.listen(config.port, () => {
-  console.log(`IronClad API listening on http://localhost:${config.port}/api`)
+  console.log(`IronClad API listening on http://localhost:${config.port}/api (store: ${config.dataStore})`)
 })
 
-function shutdown() { server.close(() => process.exit(0)) }
+function shutdown() { server.close(async () => { await pool?.end(); process.exit(0) }) }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
