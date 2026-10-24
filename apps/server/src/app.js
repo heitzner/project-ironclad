@@ -3,6 +3,7 @@ import { config } from './config.js'
 import { HttpError, errorMiddleware } from './http/errors.js'
 import { requirePositions, requireRoles } from './http/access.js'
 import { persistMutations } from './http/persistence.js'
+import { createLiveUpdates } from './http/liveUpdates.js'
 import { InMemoryPortalRepository } from './repositories/InMemoryPortalRepository.js'
 import { createAuthRoutes } from './routes/authRoutes.js'
 import { AuthService } from './services/AuthService.js'
@@ -45,11 +46,13 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
   const auth = authService || new AuthService(repository, { emailService: mail })
   const portal = portalService || new PortalService(repository, auth)
   const app = express()
+  const allowedOrigin = origin => config.cors.allowedOrigins.includes(origin)
+    || (config.cors.allowLocalDevelopmentOrigins && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || ''))
+  const live = createLiveUpdates({ isAllowedOrigin: origin => !origin || allowedOrigin(origin) })
   app.disable('x-powered-by')
   app.use((request, response, next) => {
     const origin = request.get('origin')
-    const localOrigin = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '')
-    if (origin && (config.cors.allowedOrigins.includes(origin) || config.cors.allowLocalDevelopmentOrigins && localOrigin)) {
+    if (origin && allowedOrigin(origin)) {
       response.set('Access-Control-Allow-Origin', origin)
       response.set('Vary', 'Origin')
       response.set('Access-Control-Allow-Headers', 'Authorization, Content-Type')
@@ -60,6 +63,7 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
   })
   app.use(express.json({ limit: '1mb' }))
   app.use('/api', persistMutations(repository))
+  app.use('/api', live.middleware(repository))
 
   const optionalAuth = (request, _response, next) => {
     try { const token = bearerToken(request); request.identity = token ? auth.authenticate(token) : null; next() } catch (error) { next(error) }
@@ -115,5 +119,5 @@ export function createApp({ repository = new InMemoryPortalRepository(), authSer
   if (!config.production) app.post('/api/test/reset', (_request, response) => response.json({ reset: true, accountCount: repository.reset().accounts.length }))
   app.use((request, _response, next) => next(new HttpError(404, 'ROUTE_NOT_FOUND', `Route does not exist: ${request.method} ${request.path}`)))
   app.use(errorMiddleware)
-  return { app, repository, authService: auth, portalService: portal, emailService: mail }
+  return { app, repository, authService: auth, portalService: portal, emailService: mail, live }
 }
