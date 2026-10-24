@@ -18,11 +18,12 @@ if (config.dataStore === 'postgres') {
   repository = await PostgresPortalRepository.connect({ pool })
 }
 
-const { app } = createApp({ repository })
+const { app, live } = createApp({ repository })
 const server = app.listen(config.port, () => {
   console.log(`IronClad API listening on http://localhost:${config.port}/api (store: ${config.dataStore})`)
 })
+live.attach(server)
 
-function shutdown() { server.close(async () => { await pool?.end(); process.exit(0) }) }
+function shutdown() { live.close(); server.close(async () => { await pool?.end(); process.exit(0) }) }
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)

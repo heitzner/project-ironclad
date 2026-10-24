@@ -14,6 +14,7 @@ import StudentProvider from '../student/StudentProvider.jsx'
 import { createStudentService } from '../../services/student.service.js'
 import { canManage } from '../../data/frontend-system.js'
 import { createPortalApiStore } from '../../data/portal-api-store.js'
+import { connectLiveUpdates } from '../../services/liveUpdates.js'
 import {
   changePortalPassword, downloadPortalArchive, loadPortalSession, registerPortal,
   requestPortalVerification, resetPortalPassword, signInPortal, signOutPortal, verifyPortalEmail,
@@ -46,8 +47,10 @@ export default function FrontendSystem() {
   const [loadSession] = useState(() => loadPortalSession)
   useEffect(() => {
     store.refresh().catch(() => {})
+    // Live updates refresh within about a second; polling remains the fallback.
     const timer = window.setInterval(() => store.refresh().catch(() => {}), 15000)
-    return () => window.clearInterval(timer)
+    const stopLiveUpdates = connectLiveUpdates({ onChange: () => store.refresh().catch(() => {}) })
+    return () => { window.clearInterval(timer); stopLiveUpdates() }
   }, [store])
   return <AuthProvider loadSession={loadSession}><PortalProvider authActions={authActions}><SystemRoutes store={store} /></PortalProvider></AuthProvider>
 }
