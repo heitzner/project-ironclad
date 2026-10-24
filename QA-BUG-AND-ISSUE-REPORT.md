@@ -305,3 +305,25 @@ These checks passed and should not be reported as defects unless later changes r
 ## Revalidation checklist
 
 After fixes, rerun all backend/frontend tests and add targeted regression tests for each Critical and High issue. Then verify the complete workflows in a browser using separate Viewer, Student, Council, and Admin sessions. Do not use a live database during this phase; keep persistence behind the existing in-memory repository interfaces until the database team supplies the schema.
+
+## QA Status Tracking Update (October 24, 2026 Verification)
+
+### [QA-M004] Room Booking - Floor 4 Availability
+- **Status:** Potential Regression Found
+- **Observation:** Floor 4 rooms are no longer visually grayed out or disabled within the active user interface portal. 
+
+### [QA-M005] Room Booking - Authorized Time Blocks
+- **Status:** Patched & Verified
+- **Observation:** The frontend system successfully enforces time slot constraints. Out-of-bounds selection handles are cleanly locked.
+
+### [QA-M007] Team Event Registrations - Form Valuations
+- **Status:** Active Bug
+- **Observation:** Verified. The event submission module remains vulnerable to data corruption. Submitting fictional teammate credentials permits transaction progression without validation.
+
+### [QA-M008] Archive Dashboard - Parameter Conversions
+- **Status:** Patched & Verified
+- **Observation:** Resolved on current runtime environment. The export mechanism correctly passes explicit system parameters matching UI table criteria.
+
+### [QA-M011] Account Reset - Mock Confirmation Trap
+- **Status:** Active Bug
+- **Observation:** Verified. Clicking the "Send Reset Link" modal successfully simulates a transaction on the frontend UI, but the backend server terminal returns no operational outputs or cryptographic data mutations.
